@@ -13,9 +13,20 @@ void mensajeMQTT(String &topic, String &payload) {
   Serial.println("Mensaje: " + topic + " - " + payload);
   TelnetStream.println("Mensaje: " + topic + " - " + payload);
 
-  // int UltimoPleca = topic.lastIndexOf('/');
-  // int LongitudTopic = topic.length();
-  // String Mensaje = topic.substring(UltimoPleca + 1, LongitudTopic);
+  int UltimoPleca = topic.lastIndexOf('/');
+  int LongitudTopic = topic.length();
+  String Mensaje = topic.substring(UltimoPleca + 1, LongitudTopic);
+
+
+  if (Mensaje.equals("hoy")) {
+    if (payload.equals("True") || Mensaje.equals("true")) {
+      estadoRacha = racha;
+      Serial.println("Habito hecho Hoy");
+    } else {
+      estadoRacha = noRacha;
+      Serial.println("Habito NO hecho Hoy");
+    }
+  }
 
   // if (Mensaje.equals("t") || Mensaje.equals("T")) {
   //   boolean EstadoCambiar = true;
@@ -53,4 +64,12 @@ void mensajeMQTT(String &topic, String &payload) {
   //   }
   //   escrivirArchivo(ID - 1, EstadosLampara[ID - 1] ? "encendido" : "apagado");
   // }
+}
+
+void enviarMQTT(String tipic, String mensaje) {
+  Serial.print("Enviando[");
+  Serial.print(tipic);
+  Serial.print("] ");
+  Serial.println(mensaje);
+  client.publish(tipic, mensaje);
 }

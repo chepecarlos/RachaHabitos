@@ -24,19 +24,30 @@ ESP8266WiFiMulti wifiMulti;
 #define noMQTT 1
 #define conectado 2
 
+#define noConfig 0
+#define noRacha 1
+#define racha 2
+
 #include <MQTT.h>
 #include <TelnetStream.h>
+#include <Ticker.h>
 #include "data.h"
 
-int led = 17;
+boolean EstadoLed = false;
+
+Ticker cambiarLed;
+int ledEstado = 17;
 int boton = 18;
 
 int estado = noWifi;
 int estadoAnterior = -1;
 
+int estadoRacha = noConfig;
+int estadoRachaAnterior = -1;
+
 void setup() {
   Serial.begin(115200);
-  pinMode(led, OUTPUT);
+  pinMode(ledEstado, OUTPUT);
   pinMode(boton, INPUT);
   conectarWifi();
 }
@@ -45,13 +56,39 @@ void setup() {
 void loop() {
   actualizarWifi();
   bool estado = digitalRead(boton);
-  // Serial.print("Estado: ");
-  // Serial.println(estado);
   if (digitalRead(boton)) {
-    digitalWrite(led, HIGH);
-    delay(1000);
-    digitalWrite(led, LOW);
-    delay(1000);
+    digitalWrite(ledEstado, HIGH);
+    enviarMQTT("habito/ejercicio/reportar", "si");
+    delay(5000);
+    digitalWrite(ledEstado, LOW);
   }
+  actualizarEstado();
   delay(500);
+}
+
+void funcionLed() {
+  EstadoLed = !EstadoLed;
+  digitalWrite(ledEstado, EstadoLed ? HIGH : LOW);
+}
+
+void actualizarEstado() {
+  if (estadoRacha != estadoRachaAnterior) {
+    Serial.print("Cambiando Estado ");
+    Serial.println(estadoRacha);
+
+    estadoRachaAnterior = estadoRacha;
+
+    switch (estadoRacha) {
+      case noConfig:
+        cambiarLed.attach(2, funcionLed);
+        break;
+      case noRacha:
+        cambiarLed.attach(0.5, funcionLed);
+        break;
+      case racha:
+        cambiarLed.detach();
+        digitalWrite(ledEstado, HIGH);
+        break;
+    }
+  }
 }
