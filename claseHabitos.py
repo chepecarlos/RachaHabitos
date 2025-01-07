@@ -41,16 +41,19 @@ class miHábitos():
 
         return racha
 
+    def obtenerCabeza(self) -> str:
+        return {
+            "Authorization": f"Bearer {self.token}",
+            "Content-Type": "application/json",
+            "Notion-Version": "2021-08-16"
+        }
+
     def obtenerHábitos(self) -> list:
         listaHábitos = list()
 
         urlPregunta = f"https://api.notion.com/v1/databases/{self.id_database}/query"
 
-        cabeza = {
-            "Authorization": f"Bearer {self.token}",
-            "Content-Type": "application/json",
-            "Notion-Version": "2021-08-16"
-        }
+        cabeza = self.obtenerCabeza()
 
         búsqueda = {
             "filter": {
@@ -81,3 +84,61 @@ class miHábitos():
                 listaHábitos.append({"titulo": titulo, "fecha": hecho})
 
         return listaHábitos
+
+    def mantenerRacha(self):
+        fechaHoy = datetime.now()
+        textoFechaHoy = fechaHoy.strftime("%Y-%m-%d")
+        
+        urlPregunta = f"https://api.notion.com/v1/pages"
+
+        titulo = f"{self.rachaHabito()} días en rachas"
+
+        cabeza = self.obtenerCabeza()
+
+        pagina = {
+            "parent": {
+                "database_id": self.id_database
+            },
+            "properties": {
+                "Nombre": {
+                    "title": [
+                        {
+                            "text": {
+                                "content": titulo
+                            }
+                        }
+                    ]
+                },
+                "Terminado": {
+                    "checkbox": True
+                },
+                "Proyecto": {
+                    "relation": [
+                        {
+                            "id": self.id_proyecto
+                        }
+                    ]
+                },
+                "Asignado": {
+                    "select": {
+                        "name": "ChepeCarlos"
+                    }
+                },
+                "Tipo": {
+                    "select": {
+                        "name": "Periodicas"
+                    }
+                },
+                "Hacer para": {
+                    "date": {
+                        "start": textoFechaHoy
+                    }
+                }
+            }
+        }
+        
+        respuesta = requests.post(
+            urlPregunta, headers=cabeza, data=json.dumps(pagina))
+        print(json.dumps(respuesta.json(), sort_keys=False, indent=4))
+
+

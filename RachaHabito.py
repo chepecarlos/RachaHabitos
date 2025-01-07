@@ -29,8 +29,15 @@ def conectadoMQTT(client, userdata, flags, rc):
     client.subscribe("habito/#")
 
 
-def mensajeMQTT(client, userdata, msg):
-    print(f"{msg.topic} - {msg.payload}")
+def mensajeMQTT(client, userdata, mensaje):
+    topic = mensaje.topic 
+    texto = mensaje.payload
+    print(f"{topic} - {texto}")
+    
+    for hábito in listaHábitos:
+        if hábito.topic in topic and "reportar" in topic:
+            print(f"creando habito {texto}")
+            hábito.mantenerRacha()
 
 
 def iniciarMQTT() -> None:
