@@ -8,7 +8,7 @@ void conectarWifi() {
   if (wifiMulti.run() == WL_CONNECTED) {
     Serial.println("");
     Serial << "SSID:" << WiFi.SSID() << " IP:" << WiFi.localIP() << "\n";
-    estado = noMQTT;
+    estadoIndicador = noMQTT;
   }
 
   MDNS.begin(nombre);
@@ -24,10 +24,12 @@ void actualizarWifi() {
   if (wifiMulti.run() != WL_CONNECTED) {
     Serial.println("Wifi No Conectada!");
     delay(500);
-    estado = noWifi;
+    estadoIndicador = noWifi;
     return;
+  } else if (estadoIndicador == conectado) {
+
   } else {
-    estado = noMQTT;
+    estadoIndicador = noMQTT;
   }
 
   client.loop();
@@ -42,6 +44,7 @@ void actualizarWifi() {
     client.subscribe("habito/ejercicio/#");
     Serial.println("MQTT - Conectada!");
   }
+  estadoIndicador = conectado;
 }
 
 

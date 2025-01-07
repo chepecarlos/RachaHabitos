@@ -34,13 +34,17 @@ ESP8266WiFiMulti wifiMulti;
 #include "data.h"
 
 boolean EstadoLed = false;
+boolean EstadoLedIndicador = false;
 
 Ticker cambiarLed;
+Ticker cambiarIndicador;
+
 int ledEstado = 17;
+int ledIndicador = 2;
 int boton = 18;
 
-int estado = noWifi;
-int estadoAnterior = -1;
+int estadoIndicador = noWifi;
+int estadoIndicadorAnterior = -1;
 
 int estadoRacha = noConfig;
 int estadoRachaAnterior = -1;
@@ -48,6 +52,7 @@ int estadoRachaAnterior = -1;
 void setup() {
   Serial.begin(115200);
   pinMode(ledEstado, OUTPUT);
+  pinMode(ledIndicador, OUTPUT);
   pinMode(boton, INPUT);
   conectarWifi();
 }
@@ -63,17 +68,23 @@ void loop() {
     digitalWrite(ledEstado, LOW);
   }
   actualizarEstado();
+  actualizarIndicador();
   delay(500);
 }
 
 void funcionLed() {
-  EstadoLed = !EstadoLed;
-  digitalWrite(ledEstado, EstadoLed ? HIGH : LOW);
+  estadoIndicador = !estadoIndicador;
+  digitalWrite(ledEstado, estadoIndicador ? HIGH : LOW);
+}
+
+void funcionLedIndicador() {
+  EstadoLedIndicador = !EstadoLedIndicador;
+  digitalWrite(ledIndicador, EstadoLedIndicador ? HIGH : LOW);
 }
 
 void actualizarEstado() {
   if (estadoRacha != estadoRachaAnterior) {
-    Serial.print("Cambiando Estado ");
+    Serial.print("Cambiando Racha ");
     Serial.println(estadoRacha);
 
     estadoRachaAnterior = estadoRacha;
@@ -88,6 +99,28 @@ void actualizarEstado() {
       case racha:
         cambiarLed.detach();
         digitalWrite(ledEstado, HIGH);
+        break;
+    }
+  }
+}
+
+
+void actualizarIndicador() {
+  if (estadoIndicador != estadoIndicadorAnterior) {
+    Serial.print("Cambiando Estado ");
+    Serial.println(estadoIndicador);
+
+    estadoIndicadorAnterior = estadoIndicador;
+
+    switch (estadoIndicador) {
+      case noWifi:
+        cambiarIndicador.attach(2, funcionLedIndicador);
+        break;
+      case noMQTT:
+        cambiarIndicador.attach(1, funcionLedIndicador);
+        break;
+      case conectado:
+        cambiarIndicador.attach(0.25, funcionLedIndicador);
         break;
     }
   }
