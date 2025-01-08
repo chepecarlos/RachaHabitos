@@ -1,0 +1,6 @@
+pytz
+requests
+PyYAML
+python-telegram-bot
+paho-mqtt
+APScheduler

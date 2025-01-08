@@ -13,7 +13,7 @@ client = mqtt.Client()
 
 
 def procesarHábitos():
-    print("Indicando sistema")
+    print("Consultando Notion")
     for hábitos in listaHábitos:
         hoy = hábitos.habitoHoy()
         racha = hábitos.rachaHabito()
