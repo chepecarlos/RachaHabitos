@@ -67,14 +67,14 @@ void loop() {
     delay(5000);
     digitalWrite(ledEstado, LOW);
   }
-  actualizarEstado();
+  actualizarRacha();
   actualizarIndicador();
   delay(500);
 }
 
-void funcionLed() {
-  estadoIndicador = !estadoIndicador;
-  digitalWrite(ledEstado, estadoIndicador ? HIGH : LOW);
+void funcionLedRacha() {
+  EstadoLed = !EstadoLed;
+  digitalWrite(ledEstado, EstadoLed ? HIGH : LOW);
 }
 
 void funcionLedIndicador() {
@@ -82,7 +82,7 @@ void funcionLedIndicador() {
   digitalWrite(ledIndicador, EstadoLedIndicador ? HIGH : LOW);
 }
 
-void actualizarEstado() {
+void actualizarRacha() {
   if (estadoRacha != estadoRachaAnterior) {
     Serial.print("Cambiando Racha ");
     Serial.println(estadoRacha);
@@ -91,10 +91,10 @@ void actualizarEstado() {
 
     switch (estadoRacha) {
       case noConfig:
-        cambiarLed.attach(2, funcionLed);
+        cambiarLed.attach(2, funcionLedRacha);
         break;
       case noRacha:
-        cambiarLed.attach(0.5, funcionLed);
+        cambiarLed.attach(0.5, funcionLedRacha);
         break;
       case racha:
         cambiarLed.detach();
