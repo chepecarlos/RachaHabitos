@@ -23,6 +23,7 @@ class miHábitos():
         return False
 
     def rachaHabito(self) -> int:
+        # TODO: crear código para hábitos que ho sean diarios
         listaHábitos = self.obtenerHábitos()
         fechaHoy = datetime.now()
         racha = 0
@@ -88,10 +89,10 @@ class miHábitos():
     def mantenerRacha(self):
         fechaHoy = datetime.now()
         textoFechaHoy = fechaHoy.strftime("%Y-%m-%d")
-        
+
         urlPregunta = f"https://api.notion.com/v1/pages"
 
-        titulo = f"{self.rachaHabito()} días en rachas"
+        titulo = f"{self.rachaHabito() + 1} días en rachas"
 
         cabeza = self.obtenerCabeza()
 
@@ -136,9 +137,7 @@ class miHábitos():
                 }
             }
         }
-        
+
         respuesta = requests.post(
             urlPregunta, headers=cabeza, data=json.dumps(pagina))
         print(json.dumps(respuesta.json(), sort_keys=False, indent=4))
-
-
