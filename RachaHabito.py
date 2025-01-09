@@ -6,6 +6,7 @@ from MiLibrerias.FuncionesArchivos import ObtenerArchivo
 from apscheduler.schedulers.background import BackgroundScheduler
 
 import paho.mqtt.client as mqtt
+import os
 
 listaHábitos = list()
 
@@ -30,10 +31,10 @@ def conectadoMQTT(client, userdata, flags, rc):
 
 
 def mensajeMQTT(client, userdata, mensaje):
-    topic = mensaje.topic 
+    topic = mensaje.topic
     texto = mensaje.payload
     print(f"{topic} - {texto}")
-    
+
     for hábito in listaHábitos:
         if hábito.topic in topic and "reportar" in topic:
             print(f"creando habito {texto}")
@@ -43,8 +44,10 @@ def mensajeMQTT(client, userdata, mensaje):
 def iniciarMQTT() -> None:
     client.on_connect = conectadoMQTT
     client.on_message = mensajeMQTT
+    
+    archivoMQTT = f"{os.path.dirname(os.path.realpath(__file__))}/data/mqtt.md"
 
-    dataMQTT = ObtenerArchivo("data/mqtt.md", False)
+    dataMQTT = ObtenerArchivo(archivoMQTT, False)
 
     client.connect(dataMQTT.get("servidor"), dataMQTT.get("puerto"), 60)
     client.loop_forever()
@@ -53,8 +56,13 @@ def iniciarMQTT() -> None:
 if __name__ == '__main__':
     print("Iniciando Sistema de Hábitos")
 
-    dataEjercicio = ObtenerArchivo("data/habitoEjercicio.md", False)
-    dataNotion = ObtenerArchivo("data/notion.md", False)
+    archivoEjercicio = f"{os.path.dirname(os.path.realpath(__file__))}/data/habitoEjercicio.md"
+    archivoNotion =  f"{os.path.dirname(os.path.realpath(__file__))}/data/notion.md"
+
+    dataEjercicio = ObtenerArchivo(archivoEjercicio, False)
+    dataNotion = ObtenerArchivo(archivoNotion, False)
+
+    # TODO error cuando data es None
 
     habitoActual = miHábitos(dataEjercicio, dataNotion)
 
