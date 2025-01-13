@@ -26,19 +26,29 @@ class miHábitos():
         # TODO: crear código para hábitos que ho sean diarios
         listaHábitos = self.obtenerHábitos()
         fechaHoy = datetime.now()
-        racha = 0
         fechaActual = fechaHoy
+        racha = 0
+        
+        if self.tipo == "diario":
+            # TODO: error si se repite el dia
 
-        if not self.habitoHoy():
-            fechaActual = fechaHoy - timedelta(days=1)
+            if not self.habitoHoy():
+                fechaActual = fechaHoy - timedelta(days=1)
 
-        for habito in listaHábitos:
-            textoFechaActual = fechaActual.strftime("%Y-%m-%d")
-            if habito["fecha"] == textoFechaActual:
-                racha = racha + 1
-            else:
-                return racha
-            fechaActual = fechaActual - timedelta(days=1)
+            for habito in listaHábitos:
+                textoFechaActual = fechaActual.strftime("%Y-%m-%d")
+                if habito["fecha"] == textoFechaActual:
+                    racha = racha + 1
+                else:
+                    return racha
+                fechaActual = fechaActual - timedelta(days=1)
+        if self.tipo == "semanal":
+            semanaActual = fechaActual.isocalendar().week 
+            print(f"Semana {semanaActual}")
+        else:
+            diaSemana = fechaActual.isocalendar().weekday
+            print(f"Semana: {semanaActual} - Dia: {diaSemana}")
+            pass
 
         return racha
 
@@ -82,7 +92,13 @@ class miHábitos():
             if len(titulo) > 0:
                 hecho = propiedad["Hacer para"]["date"]["start"]
                 titulo = titulo[0]['plain_text']
-                listaHábitos.append({"titulo": titulo, "fecha": hecho})
+                encontrado = False
+                for habito in listaHábitos:
+                    if habito.get("fecha") == hecho:
+                        habito["cantidad"] += 1
+                        encontrado = True
+                if not encontrado:
+                    listaHábitos.append({"titulo": titulo, "fecha": hecho, "cantidad": 1})
 
         return listaHábitos
 
