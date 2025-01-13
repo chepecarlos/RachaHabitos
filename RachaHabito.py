@@ -14,11 +14,11 @@ client = mqtt.Client()
 
 
 def procesarHábitos():
-    print("Consultando Notion")
     for hábitos in listaHábitos:
+        titulo = hábitos.nombre
         hoy = hábitos.habitoHoy()
         racha = hábitos.rachaHabito()
-        print(f"Hoy {hoy} y {racha} días")
+        print(f"{titulo}: hoy {hoy} y {racha} días")
 
         if client.is_connected():
             client.publish(f"habito/{hábitos.topic}/hoy", f"{hoy}")
@@ -33,7 +33,7 @@ def conectadoMQTT(client, userdata, flags, rc):
 def mensajeMQTT(client, userdata, mensaje):
     topic = mensaje.topic
     texto = mensaje.payload
-    print(f"{topic} - {texto}")
+    # print(f"{topic} - {texto}")
 
     for hábito in listaHábitos:
         if hábito.topic in topic and "reportar" in topic:
@@ -44,7 +44,7 @@ def mensajeMQTT(client, userdata, mensaje):
 def iniciarMQTT() -> None:
     client.on_connect = conectadoMQTT
     client.on_message = mensajeMQTT
-    
+
     archivoMQTT = f"{os.path.dirname(os.path.realpath(__file__))}/data/mqtt.md"
 
     dataMQTT = ObtenerArchivo(archivoMQTT, False)
@@ -53,20 +53,27 @@ def iniciarMQTT() -> None:
     client.loop_forever()
 
 
+def rutaAbsoluta(ruta: str):
+    return f"{os.path.dirname(os.path.realpath(__file__))}/{ruta}"
+
+
 if __name__ == '__main__':
     print("Iniciando Sistema de Hábitos")
 
-    archivoEjercicio = f"{os.path.dirname(os.path.realpath(__file__))}/data/habitoEjercicio.md"
-    archivoNotion =  f"{os.path.dirname(os.path.realpath(__file__))}/data/notion.md"
+    archivoNotion = rutaAbsoluta("data/notion.md")
+    archivoHábitos = rutaAbsoluta("data/listaHabitos.md")
 
-    dataEjercicio = ObtenerArchivo(archivoEjercicio, False)
     dataNotion = ObtenerArchivo(archivoNotion, False)
+    dataHábitos = ObtenerArchivo(archivoHábitos, False)
+
+    for hábitos in dataHábitos:
+        archivoHabito = rutaAbsoluta(hábitos)
+        dataHabito = ObtenerArchivo(archivoHabito, False)
+        habitoActual = miHábitos(dataHabito, dataNotion)
+        print(f"Cargando: {habitoActual.nombre}")
+        listaHábitos.append(habitoActual)
 
     # TODO error cuando data es None
-
-    habitoActual = miHábitos(dataEjercicio, dataNotion)
-
-    listaHábitos.append(habitoActual)
 
     scheduler = BackgroundScheduler()
     scheduler.configure(timezone=utc)

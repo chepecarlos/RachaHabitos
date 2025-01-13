@@ -17,9 +17,18 @@ class miHábitos():
         listaHábitos = self.obtenerHábitos()
         fechaHoy = datetime.now()
         textoFechaHoy = fechaHoy.strftime("%Y-%m-%d")
-        for habito in listaHábitos:
-            if habito["fecha"] == textoFechaHoy:
-                return True
+
+        if self.tipo == "diario":
+            for habito in listaHábitos:
+                if habito["fecha"] == textoFechaHoy:
+                    return True
+        elif self.tipo == "semanal":
+            listaSemana = self.obtenerHábitosSemana()
+            textoSemana = f"{fechaHoy.isocalendar().week}-{fechaHoy.year}"
+            for semana in listaSemana:
+                if semana.get("fecha") == textoSemana:
+                    return True
+
         return False
 
     def rachaHabito(self) -> int:
@@ -28,27 +37,37 @@ class miHábitos():
         fechaHoy = datetime.now()
         fechaActual = fechaHoy
         racha = 0
-        
-        if self.tipo == "diario":
-            # TODO: error si se repite el dia
 
+        if self.tipo == "diario":
             if not self.habitoHoy():
                 fechaActual = fechaHoy - timedelta(days=1)
 
             for habito in listaHábitos:
                 textoFechaActual = fechaActual.strftime("%Y-%m-%d")
-                if habito["fecha"] == textoFechaActual:
-                    racha = racha + 1
+                if habito.get("fecha") == textoFechaActual:
+                    racha += 1
                 else:
                     return racha
                 fechaActual = fechaActual - timedelta(days=1)
         if self.tipo == "semanal":
-            semanaActual = fechaActual.isocalendar().week 
-            print(f"Semana {semanaActual}")
+
+            listaSemana = self.obtenerHábitosSemana()
+            if not self.habitoHoy():
+                fechaActual = fechaHoy - timedelta(days=7)
+
+            for habito in listaSemana:
+                textoSemana = f"{fechaActual.isocalendar().week}-{fechaActual.year}"
+                if habito.get("fecha") == textoSemana:
+                    racha += 1
+                else:
+                    return racha
+
+                fechaActual = fechaActual - timedelta(days=1)
         else:
+
+            semanaActual = fechaActual.isocalendar().week
             diaSemana = fechaActual.isocalendar().weekday
             print(f"Semana: {semanaActual} - Dia: {diaSemana}")
-            pass
 
         return racha
 
@@ -98,9 +117,30 @@ class miHábitos():
                         habito["cantidad"] += 1
                         encontrado = True
                 if not encontrado:
-                    listaHábitos.append({"titulo": titulo, "fecha": hecho, "cantidad": 1})
+                    listaHábitos.append(
+                        {"titulo": titulo, "fecha": hecho, "cantidad": 1})
 
         return listaHábitos
+
+    def obtenerHábitosSemana(self) -> list:
+        listaHábitos = self.obtenerHábitos()
+
+        listaSemana = list()
+        for habito in listaHábitos:
+            fechaDia = habito.get("fecha")
+            fechaSemana = datetime.strptime(fechaDia, '%Y-%m-%d')
+            textoSemana = f"{fechaSemana.isocalendar().week}-{fechaSemana.year}"
+
+            encontrado = False
+            for semana in listaSemana:
+                if semana.get("fecha") == textoSemana:
+                    semana["cantidad"] += 1
+                    encontrado = True
+
+            if not encontrado:
+                listaSemana.append({"fecha": textoSemana, "cantidad": 1})
+
+        return listaSemana
 
     def mantenerRacha(self):
         fechaHoy = datetime.now()
