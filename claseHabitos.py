@@ -4,12 +4,14 @@ from datetime import datetime, timedelta
 
 
 class miHábitos():
+    # TODO: solo actualizar una vez
 
     def __init__(self, data: dict, notion: dict) -> None:
         self.nombre = data.get("nombre")
         self.tipo = data.get("tipo")
         self.topic = data.get("topic")
         self.id_proyecto = data.get("id_proyecto")
+        self.repeticion = data.get("repeticion", 1)
         self.token = notion.get("token")
         self.id_database = notion.get("database")
 
@@ -20,15 +22,20 @@ class miHábitos():
 
         if self.tipo == "diario":
             for habito in listaHábitos:
-                if habito["fecha"] == textoFechaHoy:
-                    return True
+                if habito.get("fecha") == textoFechaHoy:
+                    if habito.get("cantidad") >= self.repeticion:
+                        return True
+                    else:
+                        return False
         elif self.tipo == "semanal":
             listaSemana = self.obtenerHábitosSemana()
             textoSemana = f"{fechaHoy.isocalendar().week}-{fechaHoy.year}"
             for semana in listaSemana:
                 if semana.get("fecha") == textoSemana:
-                    return True
-
+                    if semana.get("cantidad") >= self.repeticion:
+                        return True
+                    else:
+                        return False
         return False
 
     def rachaHabito(self) -> int:
@@ -45,7 +52,10 @@ class miHábitos():
             for habito in listaHábitos:
                 textoFechaActual = fechaActual.strftime("%Y-%m-%d")
                 if habito.get("fecha") == textoFechaActual:
-                    racha += 1
+                    if habito.get("cantidad") >= self.repeticion:
+                        racha += 1
+                    else:
+                        return racha
                 else:
                     return racha
                 fechaActual = fechaActual - timedelta(days=1)
@@ -58,7 +68,11 @@ class miHábitos():
             for habito in listaSemana:
                 textoSemana = f"{fechaActual.isocalendar().week}-{fechaActual.year}"
                 if habito.get("fecha") == textoSemana:
-                    racha += 1
+                    if habito.get("cantidad") >= self.repeticion:
+                        # TODO: contar repeticion en repeticion de la semana
+                        racha += 1
+                    else:
+                        return racha
                 else:
                     return racha
 
@@ -197,3 +211,30 @@ class miHábitos():
         respuesta = requests.post(
             urlPregunta, headers=cabeza, data=json.dumps(pagina))
         print(json.dumps(respuesta.json(), sort_keys=False, indent=4))
+
+    def porcentaje(self) -> int:
+
+        fechaHoy = datetime.now()
+        porcentaje = 0
+
+        if self.tipo == "diario":
+            listaHábitos = self.obtenerHábitos()
+
+            for habito in listaHábitos:
+                textoFechaActual = fechaHoy.strftime("%Y-%m-%d")
+                if habito.get("fecha") == textoFechaActual:
+                    repeticiones = habito.get("cantidad")
+                    porcentaje = (repeticiones/self.repeticion) * 100
+                    return int(porcentaje)
+
+        if self.tipo == "semanal":
+            listaSemana = self.obtenerHábitosSemana()
+
+            for habito in listaSemana:
+                textoSemana = f"{fechaHoy.isocalendar().week}-{fechaHoy.year}"
+                if habito.get("fecha") == textoSemana:
+                    repeticiones = habito.get("cantidad")
+                    porcentaje = (repeticiones/self.repeticion) * 100
+                    return int(porcentaje)
+
+        return porcentaje

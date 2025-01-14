@@ -18,16 +18,26 @@ def procesarHábitos():
         titulo = hábitos.nombre
         hoy = hábitos.habitoHoy()
         racha = hábitos.rachaHabito()
-        print(f"{titulo}: hoy {hoy} y {racha} días")
+        tipo = hábitos.tipo
+        porcentaje = 0
+        if not hoy:
+            porcentaje = hábitos.porcentaje()
+            print(f"{titulo}: Hoy No - {porcentaje}% y {racha} Racha {tipo}")
+        else:
+            print(f"{titulo}: Hoy SI y {racha} Racha {tipo}")
 
         if client.is_connected():
             client.publish(f"habito/{hábitos.topic}/hoy", f"{hoy}")
             client.publish(f"habito/{hábitos.topic}/racha", f"{racha}")
+            if not hoy:
+                client.publish(
+                    f"habito/{hábitos.topic}/porcentaje", f"{porcentaje}")
 
 
 def conectadoMQTT(client, userdata, flags, rc):
     print("Se conecto con mqtt " + str(rc))
     client.subscribe("habito/#")
+    procesarHábitos()
 
 
 def mensajeMQTT(client, userdata, mensaje):
@@ -70,14 +80,15 @@ if __name__ == '__main__':
         archivoHabito = rutaAbsoluta(hábitos)
         dataHabito = ObtenerArchivo(archivoHabito, False)
         habitoActual = miHábitos(dataHabito, dataNotion)
-        print(f"Cargando: {habitoActual.nombre} https://www.notion.so/{habitoActual.id_proyecto.replace('-','')}")
+        rutaNotion = f"https://www.notion.so/{habitoActual.id_proyecto.replace('-','')}"
+        print(f"Cargando: {habitoActual.nombre} URL: {rutaNotion}")
         listaHábitos.append(habitoActual)
 
     # TODO error cuando data es None
 
     scheduler = BackgroundScheduler()
     scheduler.configure(timezone=utc)
-    scheduler.add_job(procesarHábitos, 'interval', seconds=15)
+    scheduler.add_job(procesarHábitos, 'interval', seconds=25)
     scheduler.start()
 
     try:
