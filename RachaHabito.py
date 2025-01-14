@@ -70,7 +70,7 @@ if __name__ == '__main__':
         archivoHabito = rutaAbsoluta(hábitos)
         dataHabito = ObtenerArchivo(archivoHabito, False)
         habitoActual = miHábitos(dataHabito, dataNotion)
-        print(f"Cargando: {habitoActual.nombre}")
+        print(f"Cargando: {habitoActual.nombre} https://www.notion.so/{habitoActual.id_proyecto.replace('-','')}")
         listaHábitos.append(habitoActual)
 
     # TODO error cuando data es None
