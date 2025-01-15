@@ -175,7 +175,10 @@ class miHábitos():
             titulo = f"{self.rachaHabito() + 1} en rachas"
         else:
             porcentaje = self.porcentaje(incrementor=True)
-            titulo = f"{self.rachaHabito()} en rachas - {porcentaje}%"
+            if porcentaje >= 100:
+                titulo = f"{self.rachaHabito() + 1} en rachas"
+            else:
+                titulo = f"{self.rachaHabito()} en rachas - {porcentaje}%"
 
         cabeza = self.obtenerCabeza()
 
