@@ -117,6 +117,8 @@ class miHábitos():
         respuesta = requests.post(
             urlPregunta, headers=cabeza, data=json.dumps(búsqueda))
 
+        # print(json.dumps(respuesta.json(), sort_keys=False, indent=4))
+
         tareas = respuesta.json()["results"]
 
         for tarea in tareas:
@@ -124,15 +126,20 @@ class miHábitos():
             titulo = propiedad["Nombre"]["title"]
             if len(titulo) > 0:
                 hecho = propiedad["Hacer para"]["date"]["start"]
+                fechaTarea = datetime.fromisoformat(hecho)
+                textoFechaTarea = fechaTarea.strftime("%Y-%m-%d")
                 titulo = titulo[0]['plain_text']
                 encontrado = False
                 for habito in listaHábitos:
-                    if habito.get("fecha") == hecho:
+                    if habito.get("fecha") == textoFechaTarea:
                         habito["cantidad"] += 1
                         encontrado = True
                 if not encontrado:
-                    listaHábitos.append(
-                        {"titulo": titulo, "fecha": hecho, "cantidad": 1})
+                    listaHábitos.append({
+                        "titulo": titulo,
+                        "fecha": textoFechaTarea,
+                        "cantidad": 1
+                    })
 
         return listaHábitos
 
@@ -157,12 +164,18 @@ class miHábitos():
         return listaSemana
 
     def mantenerRacha(self):
-        fechaHoy = datetime.now()
-        textoFechaHoy = fechaHoy.strftime("%Y-%m-%d")
+        fechaHoy = datetime.now().astimezone()
+        textoFechaHoy = fechaHoy.replace(microsecond=0).isoformat()
 
         urlPregunta = f"https://api.notion.com/v1/pages"
 
-        titulo = f"{self.rachaHabito() + 1} días en rachas"
+        habitoHoy = self.habitoHoy()
+
+        if habitoHoy:
+            titulo = f"{self.rachaHabito() + 1} en rachas"
+        else:
+            porcentaje = self.porcentaje(incrementor=True)
+            titulo = f"{self.rachaHabito()} en rachas - {porcentaje}%"
 
         cabeza = self.obtenerCabeza()
 
@@ -210,12 +223,16 @@ class miHábitos():
 
         respuesta = requests.post(
             urlPregunta, headers=cabeza, data=json.dumps(pagina))
-        print(json.dumps(respuesta.json(), sort_keys=False, indent=4))
+        url = respuesta.json().get("url")
+        print(f"Consulta hecha {url}")
 
-    def porcentaje(self) -> int:
+        # print(json.dumps(respuesta.json(), sort_keys=False, indent=4))
+
+    def porcentaje(self, incrementor: bool = False) -> int:
 
         fechaHoy = datetime.now()
         porcentaje = 0
+        repeticiones = 0
 
         if self.tipo == "diario":
             listaHábitos = self.obtenerHábitos()
@@ -224,17 +241,15 @@ class miHábitos():
                 textoFechaActual = fechaHoy.strftime("%Y-%m-%d")
                 if habito.get("fecha") == textoFechaActual:
                     repeticiones = habito.get("cantidad")
-                    porcentaje = (repeticiones/self.repeticion) * 100
-                    return int(porcentaje)
-
-        if self.tipo == "semanal":
+        elif self.tipo == "semanal":
             listaSemana = self.obtenerHábitosSemana()
 
             for habito in listaSemana:
                 textoSemana = f"{fechaHoy.isocalendar().week}-{fechaHoy.year}"
                 if habito.get("fecha") == textoSemana:
                     repeticiones = habito.get("cantidad")
-                    porcentaje = (repeticiones/self.repeticion) * 100
-                    return int(porcentaje)
 
-        return porcentaje
+        if incrementor:
+            repeticiones += 1
+        porcentaje = (repeticiones/self.repeticion) * 100
+        return int(porcentaje)
