@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 
 class miHábitos():
-    # TODO: solo actualizar una vez
+    listaHábitos: list = list()
 
     def __init__(self, data: dict, notion: dict) -> None:
         self.nombre = data.get("nombre")
@@ -14,14 +14,17 @@ class miHábitos():
         self.repeticion = data.get("repeticion", 1)
         self.token = notion.get("token")
         self.id_database = notion.get("database")
+        self.listaHábitos = list()
+
+    def descargarHábitos(self):
+        self.listaHábitos = self.obtenerHábitos()
 
     def habitoHoy(self) -> bool:
-        listaHábitos = self.obtenerHábitos()
         fechaHoy = datetime.now()
         textoFechaHoy = fechaHoy.strftime("%Y-%m-%d")
 
         if self.tipo == "diario":
-            for habito in listaHábitos:
+            for habito in self.listaHábitos:
                 if habito.get("fecha") == textoFechaHoy:
                     if habito.get("cantidad") >= self.repeticion:
                         return True
@@ -40,7 +43,6 @@ class miHábitos():
 
     def rachaHabito(self) -> int:
         # TODO: crear código para hábitos que ho sean diarios
-        listaHábitos = self.obtenerHábitos()
         fechaHoy = datetime.now()
         fechaActual = fechaHoy
         racha = 0
@@ -49,7 +51,7 @@ class miHábitos():
             if not self.habitoHoy():
                 fechaActual = fechaHoy - timedelta(days=1)
 
-            for habito in listaHábitos:
+            for habito in self.listaHábitos:
                 textoFechaActual = fechaActual.strftime("%Y-%m-%d")
                 if habito.get("fecha") == textoFechaActual:
                     if habito.get("cantidad") >= self.repeticion:
@@ -144,10 +146,9 @@ class miHábitos():
         return listaHábitos
 
     def obtenerHábitosSemana(self) -> list:
-        listaHábitos = self.obtenerHábitos()
 
         listaSemana = list()
-        for habito in listaHábitos:
+        for habito in self.listaHábitos:
             fechaDia = habito.get("fecha")
             fechaSemana = datetime.strptime(fechaDia, '%Y-%m-%d')
             textoSemana = f"{fechaSemana.isocalendar().week}-{fechaSemana.year}"
@@ -238,15 +239,12 @@ class miHábitos():
         repeticiones = 0
 
         if self.tipo == "diario":
-            listaHábitos = self.obtenerHábitos()
-
-            for habito in listaHábitos:
+            for habito in self.listaHábitos:
                 textoFechaActual = fechaHoy.strftime("%Y-%m-%d")
                 if habito.get("fecha") == textoFechaActual:
                     repeticiones = habito.get("cantidad")
         elif self.tipo == "semanal":
             listaSemana = self.obtenerHábitosSemana()
-
             for habito in listaSemana:
                 textoSemana = f"{fechaHoy.isocalendar().week}-{fechaHoy.year}"
                 if habito.get("fecha") == textoSemana:

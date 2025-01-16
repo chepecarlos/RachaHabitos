@@ -15,6 +15,7 @@ client = mqtt.Client()
 
 def procesarHábitos():
     for hábitos in listaHábitos:
+        hábitos.descargarHábitos()
         titulo = hábitos.nombre
         hoy = hábitos.habitoHoy()
         racha = hábitos.rachaHabito()
