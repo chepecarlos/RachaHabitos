@@ -7,16 +7,25 @@ class miHábitos():
     listaHábitos: list = list()
 
     def __init__(self, data: dict, notion: dict) -> None:
-        self.nombre = data.get("nombre")
-        self.tipo = data.get("tipo")
-        self.topic = data.get("topic")
-        self.id_proyecto = data.get("id_proyecto")
-        self.repeticion = data.get("repeticion", 1)
-        self.token = notion.get("token")
-        self.id_database = notion.get("database")
-        self.listaHábitos = list()
+        self.nombre: str = data.get("nombre")
+        self.tipo: str = data.get("tipo")
+        self.topic: str = data.get("topic")
+        self.id_proyecto: str = data.get("id_proyecto")
+        self.id_area: str = data.get("id_area")
+        self.repeticion: int = data.get("repeticion", 1)
+        self.canal: str = data.get("canal")
+        self.token: str = notion.get("token")
+        self.id_database_tarea: str = notion.get("database_tarea")
+        self.id_database_proyecto: str = notion.get("database_proyecto")
+        self.listaHábitos: list = list()
 
-    def descargarHábitos(self):
+    def urlNotion(self) -> str:
+        if self.id_proyecto is not None:
+            return f"https://www.notion.so/{self.id_proyecto.replace('-','')}"
+        elif self.id_area is not None:
+            return f"https://www.notion.so/{self.id_area.replace('-','')}"
+
+    def descargarHábitos(self) -> list:
         self.listaHábitos = self.obtenerHábitos()
 
     def habitoHoy(self) -> bool:
@@ -73,12 +82,10 @@ class miHábitos():
                     if habito.get("cantidad") >= self.repeticion:
                         # TODO: contar repeticion en repeticion de la semana
                         racha += 1
+                        fechaActual = fechaActual - timedelta(days=1)
                     else:
                         return racha
-                else:
-                    return racha
 
-                fechaActual = fechaActual - timedelta(days=1)
         else:
 
             semanaActual = fechaActual.isocalendar().week
@@ -95,53 +102,125 @@ class miHábitos():
         }
 
     def obtenerHábitos(self) -> list:
+
         listaHábitos = list()
 
-        urlPregunta = f"https://api.notion.com/v1/databases/{self.id_database}/query"
+        if self.id_proyecto is not None:
 
-        cabeza = self.obtenerCabeza()
+            urlPregunta = f"https://api.notion.com/v1/databases/{self.id_database_tarea}/query"
 
-        búsqueda = {
-            "filter": {
-                "property": "Proyecto",
-                "relation": {
-                    "contains": self.id_proyecto,
-                }
-            },
-            "sorts": [
-                {
-                    "property": "Hacer para",
-                    "direction": "descending"
-                }
-            ]
-        }
+            cabeza = self.obtenerCabeza()
 
-        respuesta = requests.post(
-            urlPregunta, headers=cabeza, data=json.dumps(búsqueda))
+            búsqueda = {
+                "filter": {
+                    "property": "Proyecto",
+                    "relation": {
+                        "contains": self.id_proyecto,
+                    }
+                },
+                "sorts": [
+                    {
+                        "property": "Hacer para",
+                        "direction": "descending"
+                    }
+                ]
+            }
 
-        # print(json.dumps(respuesta.json(), sort_keys=False, indent=4))
+            respuesta = requests.post(
+                urlPregunta, headers=cabeza, data=json.dumps(búsqueda))
 
-        tareas = respuesta.json()["results"]
+            # print(json.dumps(respuesta.json(), sort_keys=False, indent=4))
 
-        for tarea in tareas:
-            propiedad = tarea["properties"]
-            titulo = propiedad["Nombre"]["title"]
-            if len(titulo) > 0:
-                hecho = propiedad["Hacer para"]["date"]["start"]
-                fechaTarea = datetime.fromisoformat(hecho)
-                textoFechaTarea = fechaTarea.strftime("%Y-%m-%d")
-                titulo = titulo[0]['plain_text']
-                encontrado = False
-                for habito in listaHábitos:
-                    if habito.get("fecha") == textoFechaTarea:
-                        habito["cantidad"] += 1
-                        encontrado = True
-                if not encontrado:
-                    listaHábitos.append({
-                        "titulo": titulo,
-                        "fecha": textoFechaTarea,
-                        "cantidad": 1
-                    })
+            tareas = respuesta.json()["results"]
+
+            for tarea in tareas:
+                propiedad = tarea["properties"]
+                titulo = propiedad["Nombre"]["title"]
+                # print("titulo")
+                if len(titulo) > 0:
+                    hecho = propiedad["Hacer para"]["date"]["start"]
+                    fechaTarea = datetime.fromisoformat(hecho)
+                    textoFechaTarea = fechaTarea.strftime("%Y-%m-%d")
+                    titulo = titulo[0]['plain_text']
+                    encontrado = False
+                    for habito in listaHábitos:
+                        if habito.get("fecha") == textoFechaTarea:
+                            habito["cantidad"] += 1
+                            encontrado = True
+                    if not encontrado:
+                        listaHábitos.append({
+                            "titulo": titulo,
+                            "fecha": textoFechaTarea,
+                            "cantidad": 1
+                        })
+
+        elif self.id_area is not None:
+
+            urlPregunta = f"https://api.notion.com/v1/databases/{self.id_database_proyecto}/query"
+
+            cabeza = self.obtenerCabeza()
+
+            búsqueda = {
+                "filter": {
+                    "and": [
+                        {
+                            "property": "Área",
+                            "relation": {
+                                "contains": self.id_area,
+                            }
+                        },
+                        {
+                            "property": "Terminado",
+                            "checkbox": {
+                                "equals": True
+                            }
+                        },
+                        {
+                            "property": "Canal",
+                            "select": {
+                                "equals": self.canal
+                            }
+                        }
+                    ]
+
+                },
+                "sorts": [
+                    {
+                        "property": "Hacer para",
+                        "direction": "descending"
+                    }
+                ]
+            }
+
+            respuesta = requests.post(
+                urlPregunta, headers=cabeza, data=json.dumps(búsqueda))
+            
+            # print(json.dumps(respuesta.json(), sort_keys=False, indent=4))
+            
+            tareas = respuesta.json()["results"]
+
+            for tarea in tareas:
+                propiedad = tarea["properties"]
+                titulo = propiedad["Nombre"]["title"]
+                if len(titulo) > 0:
+                    hecho = propiedad["Hacer para"]["date"]
+                    if hecho is None:
+                        continue
+                    hecho = hecho["start"]
+                    fechaTarea = datetime.fromisoformat(hecho)
+                    textoFechaTarea = fechaTarea.strftime("%Y-%m-%d")
+                    titulo = titulo[0]['plain_text']
+                    encontrado = False
+                    for habito in listaHábitos:
+                        if habito.get("fecha") == textoFechaTarea:
+                            habito["cantidad"] += 1
+                            encontrado = True
+                    if not encontrado:
+                        listaHábitos.append({
+                            "titulo": titulo,
+                            "fecha": textoFechaTarea,
+                            "cantidad": 1
+                        })
 
         return listaHábitos
 
@@ -164,7 +243,7 @@ class miHábitos():
 
         return listaSemana
 
-    def mantenerRacha(self):
+    def mantenerRacha(self) -> None:
         fechaHoy = datetime.now().astimezone()
         textoFechaHoy = fechaHoy.replace(microsecond=0).isoformat()
 
@@ -185,7 +264,7 @@ class miHábitos():
 
         pagina = {
             "parent": {
-                "database_id": self.id_database
+                "database_id": self.id_database_tarea
             },
             "properties": {
                 "Nombre": {

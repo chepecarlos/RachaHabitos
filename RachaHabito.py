@@ -20,17 +20,21 @@ def procesarHábitos():
         hoy = hábitos.habitoHoy()
         racha = hábitos.rachaHabito()
         tipo = hábitos.tipo
+        repeticiones = hábitos.repeticion
         porcentaje = 0
-        if not hoy:
+
+        if repeticiones > 1 and not hoy:
             porcentaje = hábitos.porcentaje()
             print(f"{titulo}: Hoy No - {porcentaje}% y {racha} Racha {tipo}")
+        elif not hoy:
+            print(f"{titulo}: Hoy No y {racha} Racha {tipo}")
         else:
             print(f"{titulo}: Hoy SI y {racha} Racha {tipo}")
 
         if client.is_connected():
             client.publish(f"habito/{hábitos.topic}/hoy", f"{hoy}")
             client.publish(f"habito/{hábitos.topic}/racha", f"{racha}")
-            if not hoy:
+            if repeticiones > 1 and not hoy:
                 client.publish(
                     f"habito/{hábitos.topic}/porcentaje", f"{porcentaje}")
 
@@ -81,7 +85,7 @@ if __name__ == '__main__':
         archivoHabito = rutaAbsoluta(hábitos)
         dataHabito = ObtenerArchivo(archivoHabito, False)
         habitoActual = miHábitos(dataHabito, dataNotion)
-        rutaNotion = f"https://www.notion.so/{habitoActual.id_proyecto.replace('-','')}"
+        rutaNotion = habitoActual.urlNotion()
         print(f"Cargando: {habitoActual.nombre} URL: {rutaNotion}")
         listaHábitos.append(habitoActual)
 
