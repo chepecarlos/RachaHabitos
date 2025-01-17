@@ -65,11 +65,9 @@ class miHábitos():
                 if habito.get("fecha") == textoFechaActual:
                     if habito.get("cantidad") >= self.repeticion:
                         racha += 1
+                        fechaActual = fechaActual - timedelta(days=1)
                     else:
                         return racha
-                else:
-                    return racha
-                fechaActual = fechaActual - timedelta(days=1)
         if self.tipo == "semanal":
 
             listaSemana = self.obtenerHábitosSemana()
@@ -194,9 +192,9 @@ class miHábitos():
 
             respuesta = requests.post(
                 urlPregunta, headers=cabeza, data=json.dumps(búsqueda))
-            
+
             # print(json.dumps(respuesta.json(), sort_keys=False, indent=4))
-            
+
             tareas = respuesta.json()["results"]
 
             for tarea in tareas:
