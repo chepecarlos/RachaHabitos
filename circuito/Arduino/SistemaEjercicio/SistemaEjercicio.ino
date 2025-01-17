@@ -39,9 +39,9 @@ boolean EstadoLedIndicador = false;
 Ticker cambiarLed;
 Ticker cambiarIndicador;
 
-int ledEstado = 17;
-int ledIndicador = 2;
-int boton = 18;
+int ledEstado = 18;
+int ledIndicador = 15;
+int boton = 33;
 
 int estadoIndicador = noWifi;
 int estadoIndicadorAnterior = -1;
