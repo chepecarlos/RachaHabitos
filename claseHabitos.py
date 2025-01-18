@@ -71,6 +71,7 @@ class miHábitos():
         if self.tipo == "semanal":
 
             listaSemana = self.obtenerHábitosSemana()
+            
             if not self.habitoHoy():
                 fechaActual = fechaHoy - timedelta(days=7)
 
@@ -80,7 +81,7 @@ class miHábitos():
                     if habito.get("cantidad") >= self.repeticion:
                         # TODO: contar repeticion en repeticion de la semana
                         racha += 1
-                        fechaActual = fechaActual - timedelta(days=1)
+                        fechaActual = fechaActual - timedelta(days=7)
                     else:
                         return racha
 
