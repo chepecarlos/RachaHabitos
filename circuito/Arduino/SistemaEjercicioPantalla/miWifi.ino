@@ -10,7 +10,7 @@ void conectarWifi() {
     Serial.print("SSID: ");
     Serial.print(WiFi.SSID());
     Serial.print(" IP: ");
-    Serial.println(WiFi.localIP() );
+    Serial.println(WiFi.localIP());
     // Serial << "SSID:" << WiFi.SSID() << " IP:" << WiFi.localIP() << "\n";
     estadoIndicador = noMQTT;
   }
@@ -45,7 +45,10 @@ void actualizarWifi() {
       delay(500);
       return;
     }
-    client.subscribe("habito/ejercicio/#");
+    
+    for (int i = 0; i < cantidadHabitos; i++) {
+        client.subscribe("habito/" + listaHabitos[i].Topic + "/#");
+    }
     Serial.println("MQTT - Conectada!");
   }
   estadoIndicador = conectado;

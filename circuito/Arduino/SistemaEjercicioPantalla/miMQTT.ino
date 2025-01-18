@@ -11,7 +11,18 @@ void ConfigurarMQTT() {
 // Cambiar individual alsw/estudio/estado/2 - c
 void mensajeMQTT(String &topic, String &payload) {
   Serial.println("Mensaje: " + topic + " - " + payload);
-  TelnetStream.println("Mensaje: " + topic + " - " + payload);
+  // TelnetStream.println("Mensaje: " + topic + " - " + payload);
+  int Habito = -1;
+  for (int i = 0; i < cantidadHabitos; i++) {
+    if (topic.indexOf(listaHabitos[i].Topic) >= 0) {
+      Habito = i;
+      break;
+    }
+  }
+
+  if (Habito < 0) {
+    return;
+  }
 
   int UltimoPleca = topic.lastIndexOf('/');
   int LongitudTopic = topic.length();
@@ -20,18 +31,22 @@ void mensajeMQTT(String &topic, String &payload) {
 
   if (Mensaje.equals("hoy")) {
     if (payload.equals("True") || Mensaje.equals("true")) {
-      estadoRacha = racha;
-      Serial.println("Habito hecho Hoy");
+      listaHabitos[Habito].Hoy = racha;
     } else {
-      estadoRacha = noRacha;
-      Serial.println("Habito NO hecho Hoy");
+      listaHabitos[Habito].Hoy = noRacha;
     }
   } else if (Mensaje.equals("racha")) {
     int numeroRacha = payload.toInt();
     if (numeroRacha < 0) {
       return;
     }
-    Racha = numeroRacha;
+    listaHabitos[Habito].Racha = numeroRacha;
+  } else if (Mensaje.equals("porcentaje")) {
+    int numeroPorcentaje = payload.toInt();
+    if (numeroPorcentaje < 0) {
+      return;
+    }
+    listaHabitos[Habito].Porcentaje = numeroPorcentaje;
   }
 
   // if (Mensaje.equals("t") || Mensaje.equals("T")) {
