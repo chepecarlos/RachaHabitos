@@ -137,6 +137,7 @@ class miHábitos():
                 titulo = propiedad["Nombre"]["title"]
                 # print("titulo")
                 if len(titulo) > 0:
+                    # TODO: agregar error por si no encuentra fecha
                     hecho = propiedad["Hacer para"]["date"]["start"]
                     fechaTarea = datetime.fromisoformat(hecho)
                     textoFechaTarea = fechaTarea.strftime("%Y-%m-%d")
@@ -220,6 +221,11 @@ class miHábitos():
                             "fecha": textoFechaTarea,
                             "cantidad": 1
                         })
+        
+        def ordenarFecha(dict):
+            return dict['fecha']
+                        
+        listaHábitos.sort(reverse=True, key=ordenarFecha)
 
         return listaHábitos
 
