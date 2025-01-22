@@ -111,14 +111,6 @@ void setup() {
 void loop() {
   actualizarWifi();
   actualizarRacha();
-  // bool estado = digitalRead(boton);
-  // if (digitalRead(boton)) {
-  //   // digitalWrite(ledEstado, HIGH);
-  //   enviarMQTT("habito/ejercicio/reportar", "si");
-  //   delay(5000);
-  //   // digitalWrite(ledEstado, LOW);
-  // }
-  // actualizarIndicador();
   delay(500);
 }
 
@@ -126,17 +118,17 @@ void actualizarRacha() {
   bool Cambio = false;
 
   for (int i = 0; i < cantidadHabitos; i++) {
-    if (listaHabitos[i].Racha != listaHabitos[i].RachaAnterior || listaHabitos[i].Hoy != listaHabitos[i].HoyAnterior || listaHabitos[i].Porcentaje != listaHabitos[i].PorcentajeAnterior) {
+    if (listaHabitos[i].Racha.Actual != listaHabitos[i].Racha.Anterior || listaHabitos[i].Hoy.Actual != listaHabitos[i].Hoy.Anterior || listaHabitos[i].Porcentaje.Actual != listaHabitos[i].Porcentaje.Anterior) {
       Cambio = true;
       Serial.print(listaHabitos[i].Nombre);
       Serial.print(" ");
-      Serial.print(listaHabitos[i].Racha);
+      Serial.print(listaHabitos[i].Racha.Actual);
       Serial.print(" Racha, Hoy ");
-      Serial.print(listaHabitos[i].Hoy == racha ? "Si" : "No");
+      Serial.print(listaHabitos[i].Hoy.Actual == racha ? "Si" : "No");
       Serial.println();
-      listaHabitos[i].RachaAnterior = listaHabitos[i].Racha;
-      listaHabitos[i].HoyAnterior = listaHabitos[i].Hoy;
-      listaHabitos[i].PorcentajeAnterior = listaHabitos[i].Porcentaje;
+      listaHabitos[i].Racha.Anterior = listaHabitos[i].Racha.Actual;
+      listaHabitos[i].Hoy.Anterior = listaHabitos[i].Hoy.Actual;
+      listaHabitos[i].Porcentaje.Anterior = listaHabitos[i].Porcentaje.Actual;
     }
   }
 
@@ -151,16 +143,16 @@ void actualizarRacha() {
 
     for (int i = 0; i < cantidadHabitos; i++) {
       String Texto = "" + Texto += listaHabitos[i].Nombre + ": ";
-      Texto += String(listaHabitos[i].Racha) + " Racha, ";
+      Texto += String(listaHabitos[i].Racha.Actual) + " Racha, ";
       Texto += "Hoy ";
-      if (listaHabitos[i].Hoy == racha) {
+      if (listaHabitos[i].Hoy.Actual == racha) {
         Texto += "SI";
       } else {
         Texto += "NO";
       }
 
-      if (listaHabitos[i].Hoy == noRacha) {
-        Texto += ", " + String(listaHabitos[i].Porcentaje) + "%";
+      if (listaHabitos[i].Hoy.Actual == noRacha && listaHabitos[i].Porcentaje.Actual >= 0) {
+        Texto += ", " + String(listaHabitos[i].Porcentaje.Actual) + "%";
       }
 
       cursorX = 30;
@@ -171,57 +163,3 @@ void actualizarRacha() {
     epd_poweroff();
   }
 }
-
-// void funcionLedRacha() {
-//   EstadoLed = !EstadoLed;
-//   digitalWrite(ledEstado, EstadoLed ? HIGH : LOW);
-// }
-
-// void funcionLedIndicador() {
-//   EstadoLedIndicador = !EstadoLedIndicador;
-//   digitalWrite(ledIndicador, EstadoLedIndicador ? HIGH : LOW);
-// }
-
-// void actualizarRacha() {
-//   if (estadoRacha != estadoRachaAnterior) {
-//     Serial.print("Cambiando Racha ");
-//     Serial.println(estadoRacha);
-
-//     estadoRachaAnterior = estadoRacha;
-
-//     switch (estadoRacha) {
-//       case noConfig:
-//         cambiarLed.attach(2, funcionLedRacha);
-//         break;
-//       case noRacha:
-//         cambiarLed.attach(0.5, funcionLedRacha);
-//         break;
-//       case racha:
-//         cambiarLed.detach();
-//         digitalWrite(ledEstado, HIGH);
-//         break;
-//     }
-//   }
-// }
-
-
-// void actualizarIndicador() {
-//   if (estadoIndicador != estadoIndicadorAnterior) {
-//     Serial.print("Cambiando Estado ");
-//     Serial.println(estadoIndicador);
-
-//     estadoIndicadorAnterior = estadoIndicador;
-
-//     switch (estadoIndicador) {
-//       case noWifi:
-//         cambiarIndicador.attach(2, funcionLedIndicador);
-//         break;
-//       case noMQTT:
-//         cambiarIndicador.attach(1, funcionLedIndicador);
-//         break;
-//       case conectado:
-//         cambiarIndicador.attach(0.25, funcionLedIndicador);
-//         break;
-//     }
-//   }
-// }
