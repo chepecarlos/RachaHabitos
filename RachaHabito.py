@@ -12,31 +12,9 @@ listaHábitos = list()
 
 client = mqtt.Client()
 
-
 def procesarHábitos():
-    for hábitos in listaHábitos:
-        hábitos.descargarHábitos()
-        titulo = hábitos.nombre
-        hoy = hábitos.habitoHoy()
-        racha = hábitos.rachaHabito()
-        tipo = hábitos.tipo
-        repeticiones = hábitos.repeticion
-        porcentaje = 0
-
-        if repeticiones > 1 and not hoy:
-            porcentaje = hábitos.porcentaje()
-            print(f"{titulo}: Hoy No - {porcentaje}% y {racha} Racha {tipo}")
-        elif not hoy:
-            print(f"{titulo}: Hoy No y {racha} Racha {tipo}")
-        else:
-            print(f"{titulo}: Hoy SI y {racha} Racha {tipo}")
-
-        if client.is_connected():
-            client.publish(f"habito/{hábitos.topic}/hoy", f"{hoy}")
-            client.publish(f"habito/{hábitos.topic}/racha", f"{racha}")
-            if repeticiones > 1 and not hoy:
-                client.publish(
-                    f"habito/{hábitos.topic}/porcentaje", f"{porcentaje}")
+    for hábito in listaHábitos:
+        hábito.publicarMQTT()
 
 
 def conectadoMQTT(client, userdata, flags, rc):
@@ -54,6 +32,7 @@ def mensajeMQTT(client, userdata, mensaje):
         if hábito.topic in topic and "reportar" in topic:
             print(f"creando habito {texto}")
             hábito.mantenerRacha()
+            hábito.publicarMQTT()
 
 
 def iniciarMQTT() -> None:
@@ -65,6 +44,9 @@ def iniciarMQTT() -> None:
     dataMQTT = ObtenerArchivo(archivoMQTT, False)
 
     client.connect(dataMQTT.get("servidor"), dataMQTT.get("puerto"), 60)
+    for hábito in listaHábitos:
+        hábito.clienteMQTT = client
+    
     client.loop_forever()
 
 
@@ -93,7 +75,7 @@ if __name__ == '__main__':
 
     scheduler = BackgroundScheduler()
     scheduler.configure(timezone=utc)
-    scheduler.add_job(procesarHábitos, 'interval', seconds=25)
+    scheduler.add_job(procesarHábitos, 'interval', seconds=60)
     scheduler.start()
 
     try:

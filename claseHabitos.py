@@ -1,10 +1,12 @@
 import requests
 import json
 from datetime import datetime, timedelta
+import paho.mqtt.client as mqtt
 
 
 class miHábitos():
     listaHábitos: list = list()
+    clienteMQTT = None
 
     def __init__(self, data: dict, notion: dict) -> None:
         self.nombre: str = data.get("nombre")
@@ -18,6 +20,7 @@ class miHábitos():
         self.id_database_tarea: str = notion.get("database_tarea")
         self.id_database_proyecto: str = notion.get("database_proyecto")
         self.listaHábitos: list = list()
+        self.clienteMQTT = None
 
     def urlNotion(self) -> str:
         if self.id_proyecto is not None:
@@ -68,10 +71,10 @@ class miHábitos():
                         fechaActual = fechaActual - timedelta(days=1)
                     else:
                         return racha
-        if self.tipo == "semanal":
+        elif self.tipo == "semanal":
 
             listaSemana = self.obtenerHábitosSemana()
-            
+
             if not self.habitoHoy():
                 fechaActual = fechaHoy - timedelta(days=7)
 
@@ -221,10 +224,10 @@ class miHábitos():
                             "fecha": textoFechaTarea,
                             "cantidad": 1
                         })
-        
+
         def ordenarFecha(dict):
             return dict['fecha']
-                        
+
         listaHábitos.sort(reverse=True, key=ordenarFecha)
 
         return listaHábitos
@@ -338,3 +341,28 @@ class miHábitos():
             repeticiones += 1
         porcentaje = (repeticiones/self.repeticion) * 100
         return int(porcentaje)
+
+    def publicarMQTT(self) -> None:
+        if self.clienteMQTT is None:
+            print("Error Cliente MQTT no configurado")
+
+        if not self.clienteMQTT.is_connected():
+            print("Error no conectado a MQTT")
+
+        self.descargarHábitos()
+
+        hoy = self.habitoHoy()
+        racha = self.rachaHabito()
+        porcentaje = 0
+
+        self.clienteMQTT.publish(f"habito/{self.topic}/hoy", f"{hoy}")
+        self.clienteMQTT.publish(f"habito/{self.topic}/racha", f"{racha}")
+
+        if self.repeticion > 1 and not hoy:
+            porcentaje = self.porcentaje()
+            self.clienteMQTT.publish(
+                f"habito/{self.topic}/porcentaje", f"{porcentaje}")
+            print(
+                f"{self.nombre}: Hoy No - {porcentaje}% y {racha} Racha {self.tipo}")
+        else:
+            print(f"{self.nombre}: Hoy {'Si' if hoy else 'No'} y {racha} Racha {self.tipo}")
