@@ -1,21 +1,23 @@
+struct estadoIndicador {
+  int Actual;
+  int Anterior;
+};
+
 struct habito {
   String Nombre;
   String Topic;
-  int Racha;
-  int Hoy;
-  int Porcentaje;
-  int RachaAnterior;
-  int HoyAnterior;
-  int PorcentajeAnterior;
+  estadoIndicador Hoy;
+  estadoIndicador Racha;
+  estadoIndicador Porcentaje;
 };
 
 #define cantidadHabitos 6
 
 habito listaHabitos[cantidadHabitos] = {
-  { "ejercicio", "ejercicio", -1, noConfig, -1, -1, noConfig, -1 },
-  { "ordenar", "ordenar", -1, noConfig, -1, -1, noConfig, -1 },
-  { "tiktok", "tiktok", -1, noConfig, -1, -1, noConfig, -1 },
-  { "youtube", "youtube", -1, noConfig, -1, -1, noConfig, -1 },
-  { "cepillarme", "cepillarme", -1, noConfig, -1, -1, noConfig, -1 },
-  { "planeacion semanal", "r-semanal", -1, noConfig, -1, -1, noConfig, -1 }
+  { "ejercicio", "ejercicio", { noConfig, noConfig }, { -1, -1 }, { -1, -1 } },
+  { "ordenar", "ordenar", { noConfig, noConfig }, { -1, -1 }, { -1, -1 } },
+  { "tiktok", "tiktok", { noConfig, noConfig }, { -1, -1 }, { -1, -1 } },
+  { "youtube", "youtube", { noConfig, noConfig }, { -1, -1 }, { -1, -1 } },
+  { "cepillarme", "cepillarme", { noConfig, noConfig }, { -1, -1 }, { -1, -1 } },
+  { "planeacion semanal", "r-semanal", { noConfig, noConfig }, { -1, -1 }, { -1, -1 } }
 };

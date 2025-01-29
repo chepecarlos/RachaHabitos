@@ -32,49 +32,60 @@ ESP8266WiFiMulti wifiMulti;
 #include <TelnetStream.h>
 #include <Ticker.h>
 #include "data.h"
+#include "miHabitos.h"
 
 boolean EstadoLed = false;
 boolean EstadoLedIndicador = false;
 
-Ticker cambiarLed;
 Ticker cambiarIndicador;
 
-int ledEstado = 18;
 int ledIndicador = 15;
-int boton = 33;
 
-int estadoIndicador = noWifi;
-int estadoIndicadorAnterior = -1;
-
-int estadoRacha = noConfig;
-int estadoRachaAnterior = -1;
+estadoIndicador estadoWifi = { noWifi, -1 };
 
 void setup() {
   Serial.begin(115200);
-  pinMode(ledEstado, OUTPUT);
+  delay(1000);
+
+  Serial.println("Habitos Cargados");
+  for (int i = 0; i < cantidadHabitos; i++) {
+    Serial.print(listaHabitos[i].Nombre);
+    Serial.print(" - ");
+    Serial.println(listaHabitos[i].Topic);
+    pinMode(listaHabitos[i].Led, OUTPUT);
+    pinMode(listaHabitos[i].Boton, INPUT);
+  }
+  Serial.println();
+
   pinMode(ledIndicador, OUTPUT);
-  pinMode(boton, INPUT);
   conectarWifi();
 }
 
-// the loop function runs over and over again forever
 void loop() {
   actualizarWifi();
-  bool estado = digitalRead(boton);
-  if (digitalRead(boton)) {
-    digitalWrite(ledEstado, HIGH);
-    enviarMQTT("habito/ejercicio/reportar", "si");
-    delay(5000);
-    digitalWrite(ledEstado, LOW);
-  }
+  actualizarBotones();
   actualizarRacha();
   actualizarIndicador();
   delay(500);
 }
 
-void funcionLedRacha() {
-  EstadoLed = !EstadoLed;
-  digitalWrite(ledEstado, EstadoLed ? HIGH : LOW);
+void actualizarBotones() {
+  for (int i = 0; i < cantidadHabitos; i++) {
+    bool estado = digitalRead(listaHabitos[i].Boton);
+    if (estado) {
+      Serial.print("Reportando por MQTT ");
+      Serial.println(listaHabitos[i].Nombre);
+      listaHabitos[i].Cambiador.attach(0.1, funcionLedRacha, i);
+      enviarMQTT("habito/" + listaHabitos[i].Topic + "/reportar", "si");
+      delay(5000);
+      listaHabitos[i].Racha.Anterior = -1;
+    }
+  }
+}
+
+void funcionLedRacha(int id) {
+  listaHabitos[id].EstadoLed = !listaHabitos[id].EstadoLed;
+  digitalWrite(listaHabitos[id].Led, listaHabitos[id].EstadoLed ? HIGH : LOW);
 }
 
 void funcionLedIndicador() {
@@ -83,45 +94,58 @@ void funcionLedIndicador() {
 }
 
 void actualizarRacha() {
-  if (estadoRacha != estadoRachaAnterior) {
-    Serial.print("Cambiando Racha ");
-    Serial.println(estadoRacha);
+  for (int i = 0; i < cantidadHabitos; i++) {
+    if (listaHabitos[i].Racha.Actual != listaHabitos[i].Racha.Anterior) {
+      Serial.print("Cambiando ");
+      Serial.print(listaHabitos[i].Nombre);
+      Serial.print(" Racha: ");
 
-    estadoRachaAnterior = estadoRacha;
+      listaHabitos[i].Racha.Anterior = listaHabitos[i].Racha.Actual;
 
-    switch (estadoRacha) {
-      case noConfig:
-        cambiarLed.attach(2, funcionLedRacha);
-        break;
-      case noRacha:
-        cambiarLed.attach(0.5, funcionLedRacha);
-        break;
-      case racha:
-        cambiarLed.detach();
-        digitalWrite(ledEstado, HIGH);
-        break;
+      switch (listaHabitos[i].Racha.Actual) {
+        case noConfig:
+          Serial.print("No configurado");
+          listaHabitos[i].Cambiador.attach(2, funcionLedRacha, i);
+          break;
+        case noRacha:
+          Serial.print("NO");
+          listaHabitos[i].Cambiador.attach(0.5, funcionLedRacha, i);
+          break;
+        case racha:
+          Serial.print("SI");
+          listaHabitos[i].Cambiador.detach();
+          digitalWrite(listaHabitos[i].Led, HIGH);
+          break;
+      }
+      Serial.println();
     }
   }
 }
 
 
+
 void actualizarIndicador() {
-  if (estadoIndicador != estadoIndicadorAnterior) {
-    Serial.print("Cambiando Estado ");
-    Serial.println(estadoIndicador);
+  if (estadoWifi.Actual != estadoWifi.Anterior) {
+    Serial.print("Estado Wifi: ");
+    Serial.print(estadoWifi.Actual);
+    Serial.print(" - ");
 
-    estadoIndicadorAnterior = estadoIndicador;
+    estadoWifi.Anterior = estadoWifi.Actual;
 
-    switch (estadoIndicador) {
+    switch (estadoWifi.Actual) {
       case noWifi:
+        Serial.print("NoWifi");
         cambiarIndicador.attach(2, funcionLedIndicador);
         break;
       case noMQTT:
+        Serial.print("NoMQTT");
         cambiarIndicador.attach(1, funcionLedIndicador);
         break;
       case conectado:
+        Serial.print("MQTT");
         cambiarIndicador.attach(0.25, funcionLedIndicador);
         break;
     }
+    Serial.println();
   }
 }
