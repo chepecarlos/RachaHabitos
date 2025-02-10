@@ -74,6 +74,7 @@ class miHábitos():
         elif self.tipo == "semanal":
 
             listaSemana = self.obtenerHábitosSemana()
+            # print(json.dumps(listaSemana, sort_keys=False, indent=4))
 
             if not self.habitoHoy():
                 fechaActual = fechaHoy - timedelta(days=7)
@@ -115,10 +116,20 @@ class miHábitos():
 
             búsqueda = {
                 "filter": {
-                    "property": "Proyecto",
-                    "relation": {
-                        "contains": self.id_proyecto,
-                    }
+                    "and": [
+                        {
+                            "property": "Proyecto",
+                            "relation": {
+                                "contains": self.id_proyecto,
+                            }
+                        },
+                        {
+                            "property": "Terminado",
+                            "checkbox": {
+                                "equals": True
+                            }
+                        },
+                    ]
                 },
                 "sorts": [
                     {
@@ -365,4 +376,5 @@ class miHábitos():
             print(
                 f"{self.nombre}: Hoy No - {porcentaje}% y {racha} Racha {self.tipo}")
         else:
-            print(f"{self.nombre}: Hoy {'Si' if hoy else 'No'} y {racha} Racha {self.tipo}")
+            print(
+                f"{self.nombre}: Hoy {'Si' if hoy else 'No'} y {racha} Racha {self.tipo}")
