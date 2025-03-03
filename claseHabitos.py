@@ -7,6 +7,10 @@ import paho.mqtt.client as mqtt
 class miHábitos():
     listaHábitos: list = list()
     clienteMQTT = None
+    hoy = False
+    "Se a realizado el hábito hoy"
+    racha = 0
+    "Cuantos días seguidos se a realizado el hábito"
 
     def __init__(self, data: dict, notion: dict) -> None:
         self.nombre: str = data.get("nombre")
@@ -362,19 +366,19 @@ class miHábitos():
 
         self.descargarHábitos()
 
-        hoy = self.habitoHoy()
-        racha = self.rachaHabito()
+        self.hoy = self.habitoHoy()
+        self.racha = self.rachaHabito()
         porcentaje = 0
 
-        self.clienteMQTT.publish(f"habito/{self.topic}/hoy", f"{hoy}")
-        self.clienteMQTT.publish(f"habito/{self.topic}/racha", f"{racha}")
+        self.clienteMQTT.publish(f"habito/{self.topic}/hoy", f"{self.hoy}")
+        self.clienteMQTT.publish(f"habito/{self.topic}/racha", f"{self.racha}")
 
-        if self.repeticion > 1 and not hoy:
+        if self.repeticion > 1 and not self.hoy:
             porcentaje = self.porcentaje()
             self.clienteMQTT.publish(
                 f"habito/{self.topic}/porcentaje", f"{porcentaje}")
             print(
-                f"{self.nombre}: Hoy No - {porcentaje}% y {racha} Racha {self.tipo}")
+                f"{self.nombre}: Hoy No - {porcentaje}% y {self.racha} Racha {self.tipo}")
         else:
             print(
-                f"{self.nombre}: Hoy {'Si' if hoy else 'No'} y {racha} Racha {self.tipo}")
+                f"{self.nombre}: Hoy {'Si' if self.hoy else 'No'} y {self.racha} Racha {self.tipo}")

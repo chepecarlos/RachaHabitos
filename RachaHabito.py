@@ -1,6 +1,8 @@
 from pytz import utc
+import threading
 
 from claseHabitos import miHábitos
+from miGui import miGui
 from MiLibrerias.FuncionesArchivos import ObtenerArchivo
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -11,10 +13,13 @@ import os
 listaHábitos = list()
 
 client = mqtt.Client()
+miApp = None
+
 
 def procesarHábitos():
     for hábito in listaHábitos:
         hábito.publicarMQTT()
+    miApp.actualizarGui()
 
 
 def conectadoMQTT(client, userdata, flags, rc):
@@ -29,6 +34,7 @@ def mensajeMQTT(client, userdata, mensaje):
     # print(f"{topic} - {texto}")
 
     for hábito in listaHábitos:
+        # TODO:  capturar error si no hay internet
         if hábito.topic in topic and "reportar" in topic:
             print(f"creando habito {texto}")
             hábito.mantenerRacha()
@@ -46,7 +52,13 @@ def iniciarMQTT() -> None:
     client.connect(dataMQTT.get("servidor"), dataMQTT.get("puerto"), 60)
     for hábito in listaHábitos:
         hábito.clienteMQTT = client
-    
+
+    Hilo = threading.Thread(target=HiloServidor)
+    Hilo.start()
+
+
+def HiloServidor():
+    print(f"Iniciando MQTT nuevo hilo")
     client.loop_forever()
 
 
@@ -72,14 +84,20 @@ if __name__ == '__main__':
         listaHábitos.append(habitoActual)
 
     # TODO error cuando data es None
+    repetición = dataNotion.get("repetición", 60)
+    print(f"Repetición: {repetición} Segundos")
 
     scheduler = BackgroundScheduler()
     scheduler.configure(timezone=utc)
-    scheduler.add_job(procesarHábitos, 'interval', seconds=60)
+    scheduler.add_job(procesarHábitos, 'interval', seconds=repetición)
     scheduler.start()
 
     try:
         while True:
             iniciarMQTT()
+            miApp = miGui()
+            miApp.listaHábitos = listaHábitos
+            miApp.iniciarGui()
+
     except (KeyboardInterrupt, SystemExit):
         scheduler.shutdown()
