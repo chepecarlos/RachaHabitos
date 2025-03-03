@@ -4,3 +4,4 @@ PyYAML
 python-telegram-bot
 paho-mqtt
 APScheduler
+nicegui>=2.5.0
