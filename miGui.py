@@ -17,7 +17,7 @@ class miGui():
                 ui.label(f"0")
 
         ui.run(title="RachaHabito", port=8282, reload=False, show=False,
-               dark=True, language="es", uvicorn_logging_level="warning", favicon="📃")
+               dark=True, uvicorn_logging_level="warning", favicon="📃")
 
     def actualizarGui(self):
         for habito in self.listaHábitos:
