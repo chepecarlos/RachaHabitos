@@ -7,10 +7,14 @@ import paho.mqtt.client as mqtt
 class miHábitos():
     listaHábitos: list = list()
     clienteMQTT = None
-    hoy = False
+    hoy: bool = False
     "Se a realizado el hábito hoy"
-    racha = 0
+    racha: int = -1
     "Cuantos días seguidos se a realizado el hábito"
+    porcentaje: int = -1
+    repeticiones: int = -1
+    repetición: int = 1
+    "cuantas veces se debe repetir el hábito"
 
     def __init__(self, data: dict, notion: dict) -> None:
         self.nombre: str = data.get("nombre")
@@ -18,7 +22,7 @@ class miHábitos():
         self.topic: str = data.get("topic")
         self.id_proyecto: str = data.get("id_proyecto")
         self.id_area: str = data.get("id_area")
-        self.repeticion: int = data.get("repeticion", 1)
+        self.repetición: int = data.get("repeticion", 1)
         self.canal: str = data.get("canal")
         self.token: str = notion.get("token")
         self.id_database_tarea: str = notion.get("database_tarea")
@@ -42,7 +46,7 @@ class miHábitos():
         if self.tipo == "diario":
             for habito in self.listaHábitos:
                 if habito.get("fecha") == textoFechaHoy:
-                    if habito.get("cantidad") >= self.repeticion:
+                    if habito.get("cantidad") >= self.repetición:
                         return True
                     else:
                         return False
@@ -51,7 +55,7 @@ class miHábitos():
             textoSemana = f"{fechaHoy.isocalendar().week}-{fechaHoy.year}"
             for semana in listaSemana:
                 if semana.get("fecha") == textoSemana:
-                    if semana.get("cantidad") >= self.repeticion:
+                    if semana.get("cantidad") >= self.repetición:
                         return True
                     else:
                         return False
@@ -70,7 +74,7 @@ class miHábitos():
             for habito in self.listaHábitos:
                 textoFechaActual = fechaActual.strftime("%Y-%m-%d")
                 if habito.get("fecha") == textoFechaActual:
-                    if habito.get("cantidad") >= self.repeticion:
+                    if habito.get("cantidad") >= self.repetición:
                         racha += 1
                         fechaActual = fechaActual - timedelta(days=1)
                     else:
@@ -86,7 +90,7 @@ class miHábitos():
             for habito in listaSemana:
                 textoSemana = f"{fechaActual.isocalendar().week}-{fechaActual.year}"
                 if habito.get("fecha") == textoSemana:
-                    if habito.get("cantidad") >= self.repeticion:
+                    if habito.get("cantidad") >= self.repetición:
                         # TODO: contar repeticion en repeticion de la semana
                         racha += 1
                         fechaActual = fechaActual - timedelta(days=7)
@@ -277,7 +281,7 @@ class miHábitos():
         if habitoHoy:
             titulo = f"{self.rachaHabito() + 1} en rachas"
         else:
-            porcentaje = self.porcentaje(incrementor=True)
+            porcentaje = self.obtenerPorcentaje(incrementor=True)
             if porcentaje >= 100:
                 titulo = f"{self.rachaHabito() + 1} en rachas"
             else:
@@ -334,7 +338,7 @@ class miHábitos():
 
         # print(json.dumps(respuesta.json(), sort_keys=False, indent=4))
 
-    def porcentaje(self, incrementor: bool = False) -> int:
+    def obtenerPorcentaje(self, incrementor: bool = False) -> int:
 
         fechaHoy = datetime.now()
         porcentaje = 0
@@ -354,7 +358,9 @@ class miHábitos():
 
         if incrementor:
             repeticiones += 1
-        porcentaje = (repeticiones/self.repeticion) * 100
+
+        self.repeticiones = repeticiones
+        self.porcentaje = (repeticiones/self.repetición) * 100
         return int(porcentaje)
 
     def publicarMQTT(self) -> None:
@@ -373,8 +379,8 @@ class miHábitos():
         self.clienteMQTT.publish(f"habito/{self.topic}/hoy", f"{self.hoy}")
         self.clienteMQTT.publish(f"habito/{self.topic}/racha", f"{self.racha}")
 
-        if self.repeticion > 1 and not self.hoy:
-            porcentaje = self.porcentaje()
+        if self.repetición > 1 and not self.hoy:
+            porcentaje = self.obtenerPorcentaje()
             self.clienteMQTT.publish(
                 f"habito/{self.topic}/porcentaje", f"{porcentaje}")
             print(
