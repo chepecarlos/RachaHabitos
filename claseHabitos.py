@@ -341,7 +341,7 @@ class miHábitos():
     def obtenerPorcentaje(self, incrementor: bool = False) -> int:
 
         fechaHoy = datetime.now()
-        porcentaje = 0
+        self.porcentaje = 0
         repeticiones = 0
 
         if self.tipo == "diario":
@@ -361,7 +361,7 @@ class miHábitos():
 
         self.repeticiones = repeticiones
         self.porcentaje = (repeticiones/self.repetición) * 100
-        return int(porcentaje)
+        return int(self.porcentaje)
 
     def publicarMQTT(self) -> None:
         if self.clienteMQTT is None:
