@@ -5,4 +5,5 @@
 - data/habitos/habitoCepillarme.md
 - data/habitos/habitoTiktok.md
 - data/habitos/habitoYoutube.md
+- data/habitos/habitoHistoria.md
 ---
