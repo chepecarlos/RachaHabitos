@@ -29,6 +29,12 @@ class miHábitos():
         self.id_database_proyecto: str = notion.get("database_proyecto")
         self.listaHábitos: list = list()
         self.clienteMQTT = None
+        print(f"Creado Hábito {self.nombre} - {self.urlNotion()}")
+        print(f"Repetición: {self.repetición}")
+        print(f"Tipo: {self.tipo}")
+        print(f"Topic: habito/{self.topic}")
+        print(f"-"*20)
+        
 
     def urlNotion(self) -> str:
         if self.id_proyecto is not None:
@@ -256,17 +262,18 @@ class miHábitos():
         listaSemana = list()
         for habito in self.listaHábitos:
             fechaDia = habito.get("fecha")
+            cantidadDiaria = habito.get("cantidad")
             fechaSemana = datetime.strptime(fechaDia, '%Y-%m-%d')
             textoSemana = f"{fechaSemana.isocalendar().week}-{fechaSemana.year}"
 
             encontrado = False
             for semana in listaSemana:
                 if semana.get("fecha") == textoSemana:
-                    semana["cantidad"] += 1
+                    semana["cantidad"] += cantidadDiaria
                     encontrado = True
 
             if not encontrado:
-                listaSemana.append({"fecha": textoSemana, "cantidad": 1})
+                listaSemana.append({"fecha": textoSemana, "cantidad": cantidadDiaria})
 
         return listaSemana
 

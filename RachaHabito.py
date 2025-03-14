@@ -79,8 +79,6 @@ if __name__ == '__main__':
         archivoHabito = rutaAbsoluta(hábitos)
         dataHabito = ObtenerArchivo(archivoHabito, False)
         habitoActual = miHábitos(dataHabito, dataNotion)
-        rutaNotion = habitoActual.urlNotion()
-        print(f"Cargando: {habitoActual.nombre} URL: {rutaNotion}")
         listaHábitos.append(habitoActual)
 
     # TODO error cuando data es None
