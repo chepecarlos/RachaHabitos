@@ -1,5 +1,6 @@
 ---
 - data/habitos/habitoEjercicio.md
+- data/habitos/habitoCurso.md
 - data/habitos/habitoOrdenar.md
 - data/habitos/revisionSemanal.md
 - data/habitos/habitoCepillarme.md
