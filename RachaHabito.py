@@ -7,12 +7,13 @@ from MiLibrerias.FuncionesArchivos import ObtenerArchivo
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
+# librerías MQTT https://eclipse.dev/paho/files/paho.mqtt.python/html/client.html
 import paho.mqtt.client as mqtt
 import os
 
 listaHábitos = list()
 
-client = mqtt.Client()
+client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 miApp = None
 
 
@@ -22,8 +23,8 @@ def procesarHábitos():
     miApp.actualizarGui()
 
 
-def conectadoMQTT(client, userdata, flags, rc):
-    print("Se conecto con mqtt " + str(rc))
+def conectadoMQTT(client, userdata, flags, reason_code, properties):
+    print("Se conecto con mqtt " + str(reason_code))
     client.subscribe("habito/#")
     procesarHábitos()
 
@@ -41,15 +42,36 @@ def mensajeMQTT(client, userdata, mensaje):
             hábito.publicarMQTT()
 
 
+def desconectarMQTT(client, userdata, rc):
+    print("Desconectando mqtt " + str(rc))
+
+
+def errorConectarMQTT(client, userdata):
+    print(f"No se puede conectar MQTT - Re-intentando {userdata}")
+
+
 def iniciarMQTT() -> None:
     client.on_connect = conectadoMQTT
     client.on_message = mensajeMQTT
+    client.on_disconnect = desconectarMQTT
+    client.on_connect_fail = errorConectarMQTT
 
     archivoMQTT = f"{os.path.dirname(os.path.realpath(__file__))}/data/mqtt.md"
 
     dataMQTT = ObtenerArchivo(archivoMQTT, False)
 
-    client.connect(dataMQTT.get("servidor"), dataMQTT.get("puerto"), 60)
+    puertoMQTT = dataMQTT.get("puerto")
+    if puertoMQTT is None:
+        puertoMQTT = 1883
+    servidorMQTT = dataMQTT.get("servidor")
+    if servidorMQTT is None:
+        servidorMQTT = "localhost"
+
+    client.reconnect_delay_set(1, 20)
+    client.enable_logger()
+
+    client.connect_async(servidorMQTT, puertoMQTT, 60)
+
     for hábito in listaHábitos:
         hábito.clienteMQTT = client
 
@@ -59,14 +81,14 @@ def iniciarMQTT() -> None:
 
 def HiloServidor():
     print(f"Iniciando MQTT nuevo hilo")
-    client.loop_forever()
+    client.loop_forever(retry_first_connection=True)
 
 
 def rutaAbsoluta(ruta: str):
     return f"{os.path.dirname(os.path.realpath(__file__))}/{ruta}"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Iniciando Sistema de Hábitos")
 
     archivoNotion = rutaAbsoluta("data/notion.md")
@@ -87,7 +109,7 @@ if __name__ == '__main__':
 
     scheduler = BackgroundScheduler()
     scheduler.configure(timezone=utc)
-    scheduler.add_job(procesarHábitos, 'interval', seconds=repetición)
+    scheduler.add_job(procesarHábitos, "interval", seconds=repetición)
     scheduler.start()
 
     try:
