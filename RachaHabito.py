@@ -4,6 +4,7 @@ import threading
 from claseHabitos import miHábitos
 from miGui import miGui
 from MiLibrerias.FuncionesArchivos import ObtenerArchivo
+from MiLibrerias import ConfigurarLogging
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -16,6 +17,7 @@ listaHábitos = list()
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 miApp = None
 
+logger = ConfigurarLogging(__name__)
 
 def procesarHábitos():
     for hábito in listaHábitos:
@@ -24,7 +26,7 @@ def procesarHábitos():
 
 
 def conectadoMQTT(client, userdata, flags, reason_code, properties):
-    print("Se conecto con mqtt " + str(reason_code))
+    logger.info("Se conecto con mqtt " + str(reason_code))
     client.subscribe("habito/#")
     procesarHábitos()
 
@@ -37,17 +39,17 @@ def mensajeMQTT(client, userdata, mensaje):
     for hábito in listaHábitos:
         # TODO:  capturar error si no hay internet
         if hábito.topic in topic and "reportar" in topic:
-            print(f"creando habito {texto}")
+            logger.info(f"Creando Registro de habito {hábito.nombre}")
             hábito.mantenerRacha()
             hábito.publicarMQTT()
 
 
 def desconectarMQTT(client, userdata, rc):
-    print("Desconectando mqtt " + str(rc))
+    logger.info("Desconectando mqtt " + str(rc))
 
 
 def errorConectarMQTT(client, userdata):
-    print(f"No se puede conectar MQTT - Re-intentando {userdata}")
+    logger.info(f"No se puede conectar MQTT - Re-intentando {userdata}")
 
 
 def iniciarMQTT() -> None:
@@ -80,7 +82,7 @@ def iniciarMQTT() -> None:
 
 
 def HiloServidor():
-    print(f"Iniciando MQTT nuevo hilo")
+    logger.info(f"Iniciando MQTT nuevo hilo")
     client.loop_forever(retry_first_connection=True)
 
 
@@ -89,7 +91,7 @@ def rutaAbsoluta(ruta: str):
 
 
 if __name__ == "__main__":
-    print("Iniciando Sistema de Hábitos")
+    logger.info("Iniciando Sistema de Hábitos")
 
     archivoNotion = rutaAbsoluta("data/notion.md")
     archivoHábitos = rutaAbsoluta("data/listaHabitos.md")
@@ -105,7 +107,7 @@ if __name__ == "__main__":
 
     # TODO error cuando data es None
     repetición = dataNotion.get("repetición", 60)
-    print(f"Repetición: {repetición} Segundos")
+    logger.info(f"Repetición: {repetición} Segundos")
 
     scheduler = BackgroundScheduler()
     scheduler.configure(timezone=utc)

@@ -1,4 +1,7 @@
 from nicegui import ui
+from MiLibrerias import ConfigurarLogging
+
+logger = ConfigurarLogging(__name__)
 
 
 class miGui():
@@ -6,7 +9,7 @@ class miGui():
     listaHábitos = list()
 
     def __init__(self):
-        print("Creando app GUI")
+        logger.info("Creando app GUI")
 
     def iniciarGui(self):
 

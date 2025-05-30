@@ -2,9 +2,12 @@ import requests
 import json
 from datetime import datetime, timedelta
 import paho.mqtt.client as mqtt
+from MiLibrerias import ConfigurarLogging
+
+logger = ConfigurarLogging(__name__)
 
 
-class miHábitos():
+class miHábitos:
     listaHábitos: list = list()
     clienteMQTT = None
     hoy: bool = False
@@ -29,12 +32,10 @@ class miHábitos():
         self.id_database_proyecto: str = notion.get("database_proyecto")
         self.listaHábitos: list = list()
         self.clienteMQTT = None
-        print(f"Creado Hábito {self.nombre} - {self.urlNotion()}")
-        print(f"Repetición: {self.repetición}")
-        print(f"Tipo: {self.tipo}")
-        print(f"Topic: habito/{self.topic}")
-        print(f"-"*20)
-        
+        logger.info(f"Creado Hábito: {self.nombre}")
+        logger.info(f"Tipo: {self.tipo} - Repetición: {self.repetición} - {self.urlNotion()}")
+        logger.info(f"Topic: habito/{self.topic}")
+        logger.info(f"-" * 20)
 
     def urlNotion(self) -> str:
         if self.id_proyecto is not None:
@@ -107,7 +108,7 @@ class miHábitos():
 
             semanaActual = fechaActual.isocalendar().week
             diaSemana = fechaActual.isocalendar().weekday
-            print(f"Semana: {semanaActual} - Dia: {diaSemana}")
+            logger.info(f"Semana: {semanaActual} - Dia: {diaSemana}")
 
         return racha
 
@@ -115,7 +116,7 @@ class miHábitos():
         return {
             "Authorization": f"Bearer {self.token}",
             "Content-Type": "application/json",
-            "Notion-Version": "2021-08-16"
+            "Notion-Version": "2021-08-16",
         }
 
     def obtenerHábitos(self) -> list:
@@ -124,7 +125,9 @@ class miHábitos():
 
         if self.id_proyecto is not None:
 
-            urlPregunta = f"https://api.notion.com/v1/databases/{self.id_database_tarea}/query"
+            urlPregunta = (
+                f"https://api.notion.com/v1/databases/{self.id_database_tarea}/query"
+            )
 
             cabeza = self.obtenerCabeza()
 
@@ -135,26 +138,17 @@ class miHábitos():
                             "property": "Proyecto",
                             "relation": {
                                 "contains": self.id_proyecto,
-                            }
+                            },
                         },
-                        {
-                            "property": "Terminado",
-                            "checkbox": {
-                                "equals": True
-                            }
-                        },
+                        {"property": "Terminado", "checkbox": {"equals": True}},
                     ]
                 },
-                "sorts": [
-                    {
-                        "property": "Hacer para",
-                        "direction": "descending"
-                    }
-                ]
+                "sorts": [{"property": "Hacer para", "direction": "descending"}],
             }
 
             respuesta = requests.post(
-                urlPregunta, headers=cabeza, data=json.dumps(búsqueda))
+                urlPregunta, headers=cabeza, data=json.dumps(búsqueda)
+            )
 
             # print(json.dumps(respuesta.json(), sort_keys=False, indent=4))
 
@@ -169,22 +163,22 @@ class miHábitos():
                     hecho = propiedad["Hacer para"]["date"]["start"]
                     fechaTarea = datetime.fromisoformat(hecho)
                     textoFechaTarea = fechaTarea.strftime("%Y-%m-%d")
-                    titulo = titulo[0]['plain_text']
+                    titulo = titulo[0]["plain_text"]
                     encontrado = False
                     for habito in listaHábitos:
                         if habito.get("fecha") == textoFechaTarea:
                             habito["cantidad"] += 1
                             encontrado = True
                     if not encontrado:
-                        listaHábitos.append({
-                            "titulo": titulo,
-                            "fecha": textoFechaTarea,
-                            "cantidad": 1
-                        })
+                        listaHábitos.append(
+                            {"titulo": titulo, "fecha": textoFechaTarea, "cantidad": 1}
+                        )
 
         elif self.id_area is not None:
 
-            urlPregunta = f"https://api.notion.com/v1/databases/{self.id_database_proyecto}/query"
+            urlPregunta = (
+                f"https://api.notion.com/v1/databases/{self.id_database_proyecto}/query"
+            )
 
             cabeza = self.obtenerCabeza()
 
@@ -195,33 +189,18 @@ class miHábitos():
                             "property": "Área",
                             "relation": {
                                 "contains": self.id_area,
-                            }
+                            },
                         },
-                        {
-                            "property": "Terminado",
-                            "checkbox": {
-                                "equals": True
-                            }
-                        },
-                        {
-                            "property": "Canal",
-                            "select": {
-                                "equals": self.canal
-                            }
-                        }
+                        {"property": "Terminado", "checkbox": {"equals": True}},
+                        {"property": "Canal", "select": {"equals": self.canal}},
                     ]
-
                 },
-                "sorts": [
-                    {
-                        "property": "Hacer para",
-                        "direction": "descending"
-                    }
-                ]
+                "sorts": [{"property": "Hacer para", "direction": "descending"}],
             }
 
             respuesta = requests.post(
-                urlPregunta, headers=cabeza, data=json.dumps(búsqueda))
+                urlPregunta, headers=cabeza, data=json.dumps(búsqueda)
+            )
 
             # print(json.dumps(respuesta.json(), sort_keys=False, indent=4))
 
@@ -237,21 +216,19 @@ class miHábitos():
                     hecho = hecho["start"]
                     fechaTarea = datetime.fromisoformat(hecho)
                     textoFechaTarea = fechaTarea.strftime("%Y-%m-%d")
-                    titulo = titulo[0]['plain_text']
+                    titulo = titulo[0]["plain_text"]
                     encontrado = False
                     for habito in listaHábitos:
                         if habito.get("fecha") == textoFechaTarea:
                             habito["cantidad"] += 1
                             encontrado = True
                     if not encontrado:
-                        listaHábitos.append({
-                            "titulo": titulo,
-                            "fecha": textoFechaTarea,
-                            "cantidad": 1
-                        })
+                        listaHábitos.append(
+                            {"titulo": titulo, "fecha": textoFechaTarea, "cantidad": 1}
+                        )
 
         def ordenarFecha(dict):
-            return dict['fecha']
+            return dict["fecha"]
 
         listaHábitos.sort(reverse=True, key=ordenarFecha)
 
@@ -263,7 +240,7 @@ class miHábitos():
         for habito in self.listaHábitos:
             fechaDia = habito.get("fecha")
             cantidadDiaria = habito.get("cantidad")
-            fechaSemana = datetime.strptime(fechaDia, '%Y-%m-%d')
+            fechaSemana = datetime.strptime(fechaDia, "%Y-%m-%d")
             textoSemana = f"{fechaSemana.isocalendar().week}-{fechaSemana.year}"
 
             encontrado = False
@@ -297,51 +274,20 @@ class miHábitos():
         cabeza = self.obtenerCabeza()
 
         pagina = {
-            "parent": {
-                "database_id": self.id_database_tarea
-            },
+            "parent": {"database_id": self.id_database_tarea},
             "properties": {
-                "Nombre": {
-                    "title": [
-                        {
-                            "text": {
-                                "content": titulo
-                            }
-                        }
-                    ]
-                },
-                "Terminado": {
-                    "checkbox": True
-                },
-                "Proyecto": {
-                    "relation": [
-                        {
-                            "id": self.id_proyecto
-                        }
-                    ]
-                },
-                "Asignado": {
-                    "select": {
-                        "name": "ChepeCarlos"
-                    }
-                },
-                "Tipo": {
-                    "select": {
-                        "name": "Periodicas"
-                    }
-                },
-                "Hacer para": {
-                    "date": {
-                        "start": textoFechaHoy
-                    }
-                }
-            }
+                "Nombre": {"title": [{"text": {"content": titulo}}]},
+                "Terminado": {"checkbox": True},
+                "Proyecto": {"relation": [{"id": self.id_proyecto}]},
+                "Asignado": {"select": {"name": "ChepeCarlos"}},
+                "Tipo": {"select": {"name": "Periodicas"}},
+                "Hacer para": {"date": {"start": textoFechaHoy}},
+            },
         }
 
-        respuesta = requests.post(
-            urlPregunta, headers=cabeza, data=json.dumps(pagina))
+        respuesta = requests.post(urlPregunta, headers=cabeza, data=json.dumps(pagina))
         url = respuesta.json().get("url")
-        print(f"Consulta hecha {url}")
+        logger.info(f"Consulta hecha {url}")
 
         # print(json.dumps(respuesta.json(), sort_keys=False, indent=4))
 
@@ -367,15 +313,15 @@ class miHábitos():
             repeticiones += 1
 
         self.repeticiones = repeticiones
-        self.porcentaje = (repeticiones/self.repetición) * 100
+        self.porcentaje = (repeticiones / self.repetición) * 100
         return int(self.porcentaje)
 
     def publicarMQTT(self) -> None:
         if self.clienteMQTT is None:
-            print("Error Cliente MQTT no configurado")
+            logger.warning("Error Cliente MQTT no configurado")
 
         if not self.clienteMQTT.is_connected():
-            print("Error no conectado a MQTT")
+            logger.warning("Error no conectado a MQTT")
 
         self.descargarHábitos()
 
@@ -388,10 +334,11 @@ class miHábitos():
 
         if self.repetición > 1 and not self.hoy:
             porcentaje = self.obtenerPorcentaje()
-            self.clienteMQTT.publish(
-                f"habito/{self.topic}/porcentaje", f"{porcentaje}")
-            print(
-                f"{self.nombre}: Hoy No - {porcentaje}% y {self.racha} Racha {self.tipo}")
+            self.clienteMQTT.publish(f"habito/{self.topic}/porcentaje", f"{porcentaje}")
+            logger.info(
+                f"{self.nombre}: Hoy No - {porcentaje}% y {self.racha} Racha {self.tipo}"
+            )
         else:
-            print(
-                f"{self.nombre}: Hoy {'Si' if self.hoy else 'No'} y {self.racha} Racha {self.tipo}")
+            logger.info(
+                f"{self.nombre}: Hoy {'Si' if self.hoy else 'No'} y {self.racha} Racha {self.tipo}"
+            )
