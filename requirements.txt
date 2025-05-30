@@ -5,3 +5,12 @@ python-telegram-bot
 paho-mqtt
 APScheduler
 nicegui>=2.5.0
+
+## MiLibreria
+
+# Paquetes Log
+colorlog
+# Paquetes MQTT
+paho-mqtt
+# Paquetes TelegramBot
+python-telegram-bot
