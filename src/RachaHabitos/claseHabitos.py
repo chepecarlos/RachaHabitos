@@ -2,8 +2,7 @@ import requests
 import json
 from datetime import datetime, timedelta
 import paho.mqtt.client as mqtt
-from MiLibrerias import ConfigurarLogging
-
+from RachaHabitos.MiLibrerias import ConfigurarLogging, ObtenerFolderConfig
 logger = ConfigurarLogging(__name__)
 
 
@@ -331,6 +330,10 @@ class miHábitos:
 
         self.clienteMQTT.publish(f"habito/{self.topic}/hoy", f"{self.hoy}")
         self.clienteMQTT.publish(f"habito/{self.topic}/racha", f"{self.racha}")
+        
+        # print(ObtenerFolderConfig())
+        # print(nombrePrograma())
+
 
         if self.repetición > 1 and not self.hoy:
             porcentaje = self.obtenerPorcentaje()

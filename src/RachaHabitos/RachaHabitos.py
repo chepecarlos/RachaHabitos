@@ -1,10 +1,10 @@
 from pytz import utc
 import threading
 
-from claseHabitos import miHábitos
-from miGui import miGui
-from MiLibrerias.FuncionesArchivos import ObtenerArchivo
-from MiLibrerias import ConfigurarLogging
+from RachaHabitos.claseHabitos import miHábitos
+from RachaHabitos.miGui import miGui
+from RachaHabitos.MiLibrerias.FuncionesArchivos import ObtenerArchivo
+from RachaHabitos.MiLibrerias import ConfigurarLogging, ObtenerFolderConfig
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -17,12 +17,19 @@ listaHábitos = list()
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 miApp = None
 
+# nombrePrograma("RachaHabito")
+
 logger = ConfigurarLogging(__name__)
 
 def procesarHábitos():
     for hábito in listaHábitos:
         hábito.publicarMQTT()
-    miApp.actualizarGui()
+        
+    # TODO: reparar actualizar interface
+    if miApp is not None:
+        miApp.actualizarGui()
+    else:
+        logger.error("App Grafica no carga")
 
 
 def conectadoMQTT(client, userdata, flags, reason_code, properties):
@@ -53,14 +60,14 @@ def errorConectarMQTT(client, userdata):
 
 
 def iniciarMQTT() -> None:
+    """Iniciando sistema de MQTT para enviar y recibir mensajes de hábitos desde los esp
+    """
     client.on_connect = conectadoMQTT
     client.on_message = mensajeMQTT
     client.on_disconnect = desconectarMQTT
     client.on_connect_fail = errorConectarMQTT
 
-    archivoMQTT = f"{os.path.dirname(os.path.realpath(__file__))}/data/mqtt.md"
-
-    dataMQTT = ObtenerArchivo(archivoMQTT, False)
+    dataMQTT = ObtenerArchivo("data/mqtt.md")
 
     puertoMQTT = dataMQTT.get("puerto")
     if puertoMQTT is None:
@@ -90,18 +97,21 @@ def rutaAbsoluta(ruta: str):
     return f"{os.path.dirname(os.path.realpath(__file__))}/{ruta}"
 
 
-if __name__ == "__main__":
+def main():
     logger.info("Iniciando Sistema de Hábitos")
 
-    archivoNotion = rutaAbsoluta("data/notion.md")
-    archivoHábitos = rutaAbsoluta("data/listaHabitos.md")
+    dataNotion = ObtenerArchivo("data/notion.md")
+    dataHábitos = ObtenerArchivo("data/listaHabitos.md")
+    
+    if dataNotion is None or dataHábitos is None:
+        logger.error("No se encuentran los archivos de configuración")
+        return
+    
+    print(dataHábitos)
 
-    dataNotion = ObtenerArchivo(archivoNotion, False)
-    dataHábitos = ObtenerArchivo(archivoHábitos, False)
-
-    for hábitos in dataHábitos:
-        archivoHabito = rutaAbsoluta(hábitos)
-        dataHabito = ObtenerArchivo(archivoHabito, False)
+    for rutaHábitos in dataHábitos:
+        print(rutaHábitos)
+        dataHabito = ObtenerArchivo(rutaHábitos)
         habitoActual = miHábitos(dataHabito, dataNotion)
         listaHábitos.append(habitoActual)
 
@@ -123,3 +133,7 @@ if __name__ == "__main__":
 
     except (KeyboardInterrupt, SystemExit):
         scheduler.shutdown()
+    pass
+
+if __name__ == "__main__":
+    main()
