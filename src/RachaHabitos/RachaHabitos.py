@@ -12,10 +12,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import paho.mqtt.client as mqtt
 import os
 
-listaHábitos = list()
+listaHábitos: list[miHábitos] = list()
+miApp: miGui = None
 
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
-miApp = None
 
 # nombrePrograma("RachaHabito")
 
@@ -98,6 +98,7 @@ def rutaAbsoluta(ruta: str):
 
 
 def main():
+    global miApp
     logger.info("Iniciando Sistema de Hábitos")
 
     dataNotion = ObtenerArchivo("data/notion.md")
