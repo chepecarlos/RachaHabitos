@@ -5,9 +5,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=pi
-Group=pi
-ExecStart=/usr/local/bin/python3.12 /home/pi/5.Programas/RachaHabitos/RachaHabito.py
+User=chepecarlos
+Group=chepecarlos
+ExecStart=/home/chepecarlos/.local/bin/rachahabitos
 SyslogIdentifier=RachaHabito
 
 # Give the script some time to startup

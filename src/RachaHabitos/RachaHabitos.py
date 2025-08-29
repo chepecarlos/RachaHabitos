@@ -92,11 +92,6 @@ def HiloServidor():
     logger.info(f"Iniciando MQTT nuevo hilo")
     client.loop_forever(retry_first_connection=True)
 
-
-def rutaAbsoluta(ruta: str):
-    return f"{os.path.dirname(os.path.realpath(__file__))}/{ruta}"
-
-
 def main():
     global miApp
     logger.info("Iniciando Sistema de Hábitos")
